@@ -1,0 +1,83 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Kayıt Ol - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Yeni Hesap Oluştur</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">Kullanıcı Adı</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Şifre</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Ad</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="surname" class="form-label">Soyad</label>
+                            <input type="text" class="form-control" id="surname" name="surname" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="class" class="form-label">Sınıf</label>
+                            <input type="text" class="form-control" id="class" name="class" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="year_of_birth" class="form-label">Doğum Yılı</label>
+                            <input type="number" class="form-control" id="year_of_birth" name="year_of_birth" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-posta</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Telefon Numarası</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="area" class="form-label">Hedef Alan</label>
+                        <input type="text" class="form-control" id="area" name="area" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="aim" class="form-label">Hedef</label>
+                        <textarea class="form-control" id="aim" name="aim" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="security_question" class="form-label">Güvenlik Sorusu</label>
+                        <input type="text" class="form-control" id="security_question" name="security_question" required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+                    </div>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('login') }}">Zaten hesabınız var mı? Giriş yapın</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

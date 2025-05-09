@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Sorularım - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Derslerim</h2>
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ category.Name }}</h5>
+                    <p class="card-text">Bu dersteki sorularınızı görüntüleyin ve yönetin.</p>
+                    <a href="{{ url_for('category_questions', category_id=category.CategoryId) }}" class="btn btn-primary">Soruları Görüntüle</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

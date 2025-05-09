@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Ayarlar - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Ayarlar</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Bildirim Ayarları</h5>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">E-posta Bildirimleri</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                        <label class="form-check-label" for="pushNotifications">Anlık Bildirimler</label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5>Tekrar Ayarları</h5>
+                    <div class="mb-3">
+                        <label for="repeatInterval" class="form-label">Tekrar Aralığı (gün)</label>
+                        <input type="number" class="form-control" id="repeatInterval" value="7" min="1" max="30">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5>Görünüm Ayarları</h5>
+                    <div class="mb-3">
+                        <label for="theme" class="form-label">Tema</label>
+                        <select class="form-select" id="theme">
+                            <option value="light">Açık</option>
+                            <option value="dark">Koyu</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">Ayarları Kaydet</button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Geri Dön</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

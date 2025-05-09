@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Günlük Sorular</h2>
+    
+    {% if questions %}
+        <div class="row">
+            {% for question in questions %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ question.Category.Name }}</h5>
+                            <p class="card-text">{{ question.Content }}</p>
+                            
+                            {% if question.PhotoPath %}
+                                <img src="{{ url_for('static', filename=question.PhotoPath) }}" 
+                                     class="img-fluid mb-3" alt="Soru görseli">
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-{{ 'success' if question.IsCompleted else 'warning' }}">
+                                        {{ 'Tamamlandı' if question.IsCompleted else 'Devam Ediyor' }}
+                                    </span>
+                                    <span class="badge bg-info ms-2">
+                                        Zorluk: {{ question.DifficultyLevel }}
+                                    </span>
+                                </div>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('question_detail', question_id=question.QuestionId) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        Detaylar
+                                    </a>
+                                    <form action="{{ url_for('skip_question', question_id=question.QuestionId) }}" 
+                                          method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-secondary btn-sm ms-2">
+                                            Sonraya Bırak
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            Bugün için gösterilecek soru bulunmamaktadır. 
+            <a href="{{ url_for('add_question') }}" class="alert-link">Yeni soru ekleyebilir</a> 
+            veya <a href="{{ url_for('questions') }}" class="alert-link">mevcut sorularınızı</a> görüntüleyebilirsiniz.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

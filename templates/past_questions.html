@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Geçmiş Sorular - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Geçmiş Sorular</h2>
+    
+    <div class="row">
+        {% for question in questions %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if question.PhotoPath %}
+                <div class="card-img-container" style="height: 200px; overflow: hidden; cursor: pointer;" 
+                     onclick="window.location.href='{{ url_for('question_detail', question_id=question.QuestionId, source='past_questions') }}'">
+                    <img src="{{ url_for('static', filename=question.PhotoPath) }}" 
+                         class="card-img-top" 
+                         alt="Soru Görseli"
+                         style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                {% else %}
+                <div class="card-img-container" style="height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                     onclick="window.location.href='{{ url_for('question_detail', question_id=question.QuestionId, source='past_questions') }}'">
+                    <p class="text-muted">Görsel Yok</p>
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">Soru #{{ question.QuestionId }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Tekrar Tarihi: {{ question.Repeat1Date.strftime('%d.%m.%Y') }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Bildirimler - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Bildirimler</h2>
+    
+    <div class="row">
+        <!-- Bugünün Soruları Bildirimi -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-rocket-takeoff text-primary"></i> Hadi Başlayalım!
+                    </h5>
+                    <p class="card-text">
+                        Bugün çözmen gereken {{ today_questions|length }} soru seni bekliyor!
+                    </p>
+                    <a href="{{ url_for('daily_questions') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right"></i> Şimdi çözmeye başla
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geçmiş Sorular Bildirimi -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-exclamation-triangle text-warning"></i> Dikkat!
+                    </h5>
+                    <p class="card-text">
+                        {% if past_questions|length > 0 %}
+                            {{ past_questions|length }} sorunun tekrar günü geçmiş, unutmadan tekrar et!
+                        {% else %}
+                            Tüm sorularını zamanında tekrar ediyorsun, harika!
+                        {% endif %}
+                    </p>
+                    {% if past_questions|length > 0 %}
+                        <a href="{{ url_for('past_questions') }}" class="btn btn-warning">
+                            <i class="bi bi-arrow-right"></i> Tekrar sorularına git
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Başarı Bildirimi -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-emoji-smile text-success"></i> Harika!
+                    </h5>
+                    <p class="card-text">
+                        {% if completed_today|length > 0 %}
+                            Bugün {{ completed_today|length }} soruyu başarıyla tamamladın. Böyle devam et!
+                        {% else %}
+                            Her gün biraz daha iyi oluyorsun. Bugün de hedefini tamamla!
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('questions') }}" class="btn btn-success">
+                        <i class="bi bi-arrow-right"></i> İlerlemeni görüntüle
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

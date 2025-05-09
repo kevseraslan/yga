@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Soru Detayı - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <span class="badge bg-{{ 'success' if question.DifficultyLevel == 'Kolay' else 'warning' if question.DifficultyLevel == 'Orta' else 'danger' }}">
+                            {{ question.DifficultyLevel }}
+                        </span>
+                        <span class="ms-2">{{ question.Category.Name }}</span>
+                    </h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                            <i class="bi bi-pencil"></i> Not Al
+                        </button>
+                        <button type="button" class="btn btn-{{ 'danger' if is_favorite else 'outline-danger' }} btn-sm" onclick="toggleFavorite({{ question.QuestionId }})">
+                            <i class="bi bi-heart{{ '-fill' if is_favorite else '' }}"></i> Favori
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteQuestion({{ question.QuestionId }})">
+                            <i class="bi bi-trash"></i> Sil
+                        </button>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="skipQuestion({{ question.QuestionId }})">
+                            <i class="bi bi-skip-forward"></i> Atla
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" onclick="markAsCompleted({{ question.QuestionId }})">
+                            <i class="bi bi-check-circle"></i> Tamamlandı
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if question.PhotoPath %}
+                <div class="text-center mb-4">
+                    <img src="{{ url_for('static', filename=question.PhotoPath) }}" class="img-fluid" alt="Soru Görseli">
+                </div>
+                {% endif %}
+                <div class="mb-4">
+                    <h6>Soru İçeriği:</h6>
+                    <p>{{ question.Content }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Notlar:</h6>
+                    {% if question.notes %}
+                        <div class="list-group">
+                            {% for note in question.notes %}
+                                <div class="list-group-item">
+                                    <p class="mb-0">{{ note.Content }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Henüz not eklenmemiş.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('past_questions') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Not Ekleme Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNoteModalLabel">Not Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addNoteForm">
+                    <div class="mb-3">
+                        <label for="noteContent" class="form-label">Not İçeriği</label>
+                        <textarea class="form-control" id="noteContent" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="addNote({{ question.QuestionId }})">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addNote(questionId) {
+    const noteContent = document.getElementById('noteContent').value;
+    if (!noteContent || noteContent.trim() === '') {
+        showToast('Lütfen not içeriğini girin.', 'error');
+        return;
+    }
+
+    fetch(`/add_note/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: noteContent.trim() })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Not başarıyla eklendi.', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Not eklenirken bir hata oluştu.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Not eklenirken bir hata oluştu.', 'error');
+    });
+}
+
+function toggleFavorite(questionId) {
+    console.log('Favori durumu değiştiriliyor:', questionId);
+    fetch(`/toggle_favorite/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Favori yanıtı:', data);
+        if (data.success) {
+            const favoriteButton = document.querySelector(`button[onclick="toggleFavorite(${questionId})"]`);
+            if (favoriteButton) {
+                if (data.is_favorite) {
+                    favoriteButton.classList.remove('btn-outline-danger');
+                    favoriteButton.classList.add('btn-danger');
+                    favoriteButton.innerHTML = '<i class="bi bi-heart-fill"></i> Favori';
+                } else {
+                    favoriteButton.classList.remove('btn-danger');
+                    favoriteButton.classList.add('btn-outline-danger');
+                    favoriteButton.innerHTML = '<i class="bi bi-heart"></i> Favori';
+                }
+            }
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.error || 'Favori durumu güncellenirken bir hata oluştu.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Favori hatası:', error);
+        showToast('Favori durumu güncellenirken bir hata oluştu.', 'error');
+    });
+}
+
+function deleteQuestion(questionId) {
+    if (!confirm('Bu soruyu silmek istediğinizden emin misiniz?')) {
+        return;
+    }
+
+    console.log('Soru siliniyor:', questionId);
+    fetch(`/delete_question/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Silme yanıtı:', data);
+        if (data.success) {
+            showToast('Soru başarıyla silindi.', 'success');
+            setTimeout(() => window.location.href = '/past-questions', 1000);
+        } else {
+            showToast(data.error || 'Soru silinirken bir hata oluştu.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Silme hatası:', error);
+        showToast('Soru silinirken bir hata oluştu.', 'error');
+    });
+}
+
+function skipQuestion(questionId) {
+    if (!confirm('Bu soruyu atlamak istediğinizden emin misiniz?')) {
+        return;
+    }
+
+    console.log('Soru atlanıyor:', questionId);
+    fetch(`/skip_question/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Atlama yanıtı:', data);
+        if (data.success) {
+            showToast('Soru başarıyla atlandı.', 'success');
+            if (data.next_question_id) {
+                setTimeout(() => window.location.href = `/question_detail/${data.next_question_id}`, 1000);
+            } else {
+                setTimeout(() => window.location.href = '/past-questions', 1000);
+            }
+        } else {
+            showToast(data.error || 'Soru atlanırken bir hata oluştu.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Atlama hatası:', error);
+        showToast('Soru atlanırken bir hata oluştu.', 'error');
+    });
+}
+
+function markAsCompleted(questionId) {
+    if (!confirm('Bu soruyu tamamlandı olarak işaretlemek istediğinizden emin misiniz?')) {
+        return;
+    }
+
+    console.log('Soru tamamlanıyor:', questionId);
+    fetch(`/mark_completed/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Tamamlama yanıtı:', data);
+        if (data.success) {
+            showToast('Soru başarıyla tamamlandı.', 'success');
+            setTimeout(() => window.location.href = '/past-questions', 1000);
+        } else {
+            showToast(data.error || 'Soru durumu güncellenirken bir hata oluştu.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Tamamlama hatası:', error);
+        showToast('Soru durumu güncellenirken bir hata oluştu.', 'error');
+    });
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+</script>
+{% endblock %} 

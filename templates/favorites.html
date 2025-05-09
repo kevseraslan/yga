@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Favori Sorularım - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Favori Sorularım</h2>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if categories %}
+        {% for category in categories %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ category.Name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for question in questions_by_category[category.CategoryId] %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                {% if question.PhotoPath %}
+                                <div class="card-img-container" style="height: 200px; overflow: hidden;">
+                                    <img src="{{ url_for('static', filename=question.PhotoPath) }}" 
+                                         class="card-img-top" 
+                                         alt="Soru Görseli"
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                {% else %}
+                                <div class="card-img-container" style="height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                    <p class="text-muted">Görsel Yok</p>
+                                </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">Soru #{{ question.QuestionId }}</h5>
+                                    <p class="card-text">{{ question.Content[:100] }}{% if question.Content|length > 100 %}...{% endif %}</p>
+                                    <p class="card-text"><small class="text-muted">Zorluk: {{ question.DifficultyLevel }}</small></p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ url_for('view_question', question_id=question.QuestionId) }}" class="btn btn-sm btn-primary">Görüntüle</a>
+                                        <form action="{{ url_for('toggle_favorite', question_id=question.QuestionId) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-star-fill"></i> Favorilerden Çıkar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            Henüz favori sorunuz bulunmuyor. Soruları favorilere eklemek için soru görüntüleme sayfasındaki "Favorilere Ekle" butonunu kullanabilirsiniz.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

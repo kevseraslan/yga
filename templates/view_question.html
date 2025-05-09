@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Tekrar Durumu - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <span class="badge bg-{{ 'success' if question.DifficultyLevel == 'Kolay' else 'warning' if question.DifficultyLevel == 'Orta' else 'danger' }}">
+                        {{ question.DifficultyLevel }}
+                    </span>
+                    {{ question.Category.Name }}
+                </h5>
+                {% if not question.IsCompleted %}
+                    <form action="{{ url_for('mark_completed', question_id=question.QuestionId) }}" method="POST" class="d-inline" onsubmit="return handleSubmit(event)">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Tamamlandı
+                        </button>
+                    </form>
+                {% else %}
+                    <span class="badge bg-info">Tamamlandı</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Tekrar Durumu:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Tekrar Sayısı</th>
+                                    <th>Durum</th>
+                                    <th>Tekrar Tarihi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1. Tekrar</td>
+                                    <td>
+                                        {% if repeat_status.count >= 1 %}
+                                            <span class="badge bg-success">Tamamlandı</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Bekliyor</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if repeat_status.dates.repeat1 %}
+                                            {{ repeat_status.dates.repeat1.strftime('%d.%m.%Y %H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2. Tekrar</td>
+                                    <td>
+                                        {% if repeat_status.count >= 2 %}
+                                            <span class="badge bg-success">Tamamlandı</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Bekliyor</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if repeat_status.dates.repeat2 %}
+                                            {{ repeat_status.dates.repeat2.strftime('%d.%m.%Y %H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3. Tekrar</td>
+                                    <td>
+                                        {% if repeat_status.count >= 3 %}
+                                            <span class="badge bg-success">Tamamlandı</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Bekliyor</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if repeat_status.dates.repeat3 %}
+                                            {{ repeat_status.dates.repeat3.strftime('%d.%m.%Y %H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('past_questions') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Geri
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleSubmit(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const button = form.querySelector('button[type="submit"]');
+    
+    // Butonu devre dışı bırak
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> İşleniyor...';
+    
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Başarılı mesajı göster
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle"></i> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').prepend(alertDiv);
+            
+            // Sayfayı yenile
+            setTimeout(() => {
+                window.location.href = '/past-questions';
+            }, 1500);
+        } else {
+            // Hata mesajını göster
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle"></i> ${data.error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').prepend(alertDiv);
+            
+            // Butonu tekrar aktif et
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-check-circle"></i> Tamamlandı';
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        
+        // Hata mesajını göster
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle"></i> İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').prepend(alertDiv);
+        
+        // Butonu tekrar aktif et
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-check-circle"></i> Tamamlandı';
+    });
+    
+    return false;
+}
+</script>
+{% endblock %} 

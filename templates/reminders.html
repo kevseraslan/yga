@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Hatırlatıcılar - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Geçmiş Tekrar Tarihli Sorular</h5>
+            </div>
+            <div class="card-body">
+                {% if reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Soru</th>
+                                    <th>Kategori</th>
+                                    <th>Zorluk</th>
+                                    <th>Tekrar Tarihleri</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reminder in reminders %}
+                                    <tr>
+                                        <td>
+                                            {{ reminder.Content|truncate(100) }}
+                                            {% if reminder.PhotoPath %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-image"></i> Görsel mevcut
+                                                </small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ reminder.CategoryName }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if reminder.DifficultyLevel == 'Kolay' else 'warning' if reminder.DifficultyLevel == 'Orta' else 'danger' }}">
+                                                {{ reminder.DifficultyLevel }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <ul class="list-unstyled mb-0">
+                                                {% if reminder.Repeat1Date and reminder.Repeat1Date < now %}
+                                                    <li>
+                                                        <small class="text-danger">
+                                                            <i class="bi bi-clock-history"></i> 1. Tekrar: {{ reminder.Repeat1Date.strftime('%d.%m.%Y %H:%M') }}
+                                                        </small>
+                                                    </li>
+                                                {% endif %}
+                                                {% if reminder.Repeat2Date and reminder.Repeat2Date < now %}
+                                                    <li>
+                                                        <small class="text-danger">
+                                                            <i class="bi bi-clock-history"></i> 2. Tekrar: {{ reminder.Repeat2Date.strftime('%d.%m.%Y %H:%M') }}
+                                                        </small>
+                                                    </li>
+                                                {% endif %}
+                                                {% if reminder.Repeat3Date and reminder.Repeat3Date < now %}
+                                                    <li>
+                                                        <small class="text-danger">
+                                                            <i class="bi bi-clock-history"></i> 3. Tekrar: {{ reminder.Repeat3Date.strftime('%d.%m.%Y %H:%M') }}
+                                                        </small>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('question_detail', question_id=reminder.QuestionId, source='reminders') }}" class="btn btn-primary">
+                                                    <i class="bi bi-eye"></i> Görüntüle
+                                                </a>
+                                                <a href="{{ url_for('edit_question', question_id=reminder.QuestionId) }}" 
+                                                   class="btn btn-sm btn-warning" 
+                                                   title="Soruyu Düzenle">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Geçmiş tekrar tarihi olan soru bulunmamaktadır.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
