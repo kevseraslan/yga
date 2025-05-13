@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Hoş Geldin - ReviseMe{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <img src="https://img.icons8.com/color/96/000000/idea-sharing.png" alt="ReviseMe Logo" style="width:80px;">
+        <h1 class="display-4 fw-bold mt-3 mb-2 text-primary">ReviseMe</h1>
+        <p class="lead text-secondary">Kişisel eğitim ve çalışma takibinde modern, renkli ve motive edici bir yol arkadaşı!</p>
+    </div>
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow text-center border-primary">
+                <div class="card-body">
+                    <i class="fas fa-question-circle fa-2x text-primary mb-3"></i>
+                    <h5 class="card-title">Soru Takibi</h5>
+                    <p class="card-text small">Sorularını kategorilere ayır, tekrar et, favorilere ekle ve gelişimini takip et.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-tasks fa-2x text-success mb-3"></i>
+                    <h5 class="card-title">Görev Yönetimi</h5>
+                    <p class="card-text small">Günlük görevlerini planla, tamamla, gecikenleri takip et ve başarıya ulaş.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow text-center border-warning">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-warning mb-3"></i>
+                    <h5 class="card-title">Gelişim Raporu</h5>
+                    <p class="card-text small">Haftalık ve aylık istatistiklerle ilerlemeni gör, motivasyonunu artır.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow text-center border-info">
+                <div class="card-body">
+                    <i class="fas fa-bolt fa-2x text-info mb-3"></i>
+                    <h5 class="card-title">Motivasyon</h5>
+                    <p class="card-text small">Her gün motive edici mesajlar ve önerilerle destek al.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-4">
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-3 px-5"><i class="fas fa-sign-in-alt"></i> Giriş Yap</a>
+        <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg px-5"><i class="fas fa-user-plus"></i> Kayıt Ol</a>
+    </div>
+</div>
+{% endblock %} 

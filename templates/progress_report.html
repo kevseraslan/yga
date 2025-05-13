@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Gelişim Raporu - ReviseMe{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary"><i class="fas fa-chart-line"></i> Gelişim Raporu</h2>
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow text-center border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Haftalık Soru</h5>
+                    <p class="display-6 text-primary" id="weeklyQuestions">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow text-center border-success">
+                <div class="card-body">
+                    <h5 class="card-title">Aylık Soru</h5>
+                    <p class="display-6 text-success" id="monthlyQuestions">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow text-center border-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Haftalık Görev</h5>
+                    <p class="display-6 text-warning" id="weeklyTasks">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow text-center border-info">
+                <div class="card-body">
+                    <h5 class="card-title">Başarı Oranı</h5>
+                    <p class="display-6 text-info" id="successRate">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-bar"></i> Kategori Bazlı Soru Dağılımı (Haftalık)</h5>
+                    <canvas id="categoryChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow border-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title text-success"><i class="fas fa-bullseye"></i> Haftalık Hedef</h5>
+                    <p id="goalMessage" class="lead">-</p>
+                </div>
+            </div>
+            <div class="card shadow border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary"><i class="fas fa-lightbulb"></i> Öneri</h5>
+                    <p id="suggestion" class="lead">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/progress_report')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('weeklyQuestions').textContent = data.weekly_questions;
+            document.getElementById('monthlyQuestions').textContent = data.monthly_questions;
+            document.getElementById('weeklyTasks').textContent = data.weekly_tasks;
+            document.getElementById('successRate').textContent = data.success_rate + '%';
+            document.getElementById('goalMessage').textContent = data.goal_message;
+            document.getElementById('suggestion').textContent = data.suggestion;
+
+            // Kategori grafiği
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const labels = data.category_stats.map(item => item.category);
+            const values = data.category_stats.map(item => item.count);
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Çözülen Soru (Haftalık)',
+                        data: values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, stepSize: 1 }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %} 

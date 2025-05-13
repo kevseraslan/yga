@@ -1,48 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}Soru Düzenle - ReviseMe{% endblock %}
+{% block title %}Soruyu Düzenle - ReviseMe{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center">Soru Düzenle</h3>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="content" class="form-label">Soru İçeriği</label>
-                        <textarea class="form-control" id="content" name="content" rows="5" required>{{ question.Content }}</textarea>
-                    </div>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> Soruyu Düzenle
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Soru İçeriği</label>
+                            <textarea class="form-control" id="content" name="content" rows="4" required>{{ question.Content }}</textarea>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="category_id" class="form-label">Kategori</label>
-                        <select class="form-select" id="category_id" name="category_id" required>
-                            <option value="">Kategori Seçin</option>
-                            {% for category in categories %}
-                            <option value="{{ category.CategoryId }}" {% if category.CategoryId == question.CategoryId %}selected{% endif %}>
-                                {{ category.Name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Ders Kategorisi</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                <option value="">Kategori Seçin</option>
+                                {% for category in categories %}
+                                <option value="{{ category.CategoryId }}" {% if category.CategoryId == question.CategoryId %}selected{% endif %}>
+                                    {{ category.Name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="difficulty" class="form-label">Zorluk Seviyesi</label>
-                        <select class="form-select" id="difficulty" name="difficulty" required>
-                            <option value="">Zorluk Seviyesi Seçin</option>
-                            <option value="Kolay" {% if question.DifficultyLevel == 'Kolay' %}selected{% endif %}>Kolay</option>
-                            <option value="Orta" {% if question.DifficultyLevel == 'Orta' %}selected{% endif %}>Orta</option>
-                            <option value="Zor" {% if question.DifficultyLevel == 'Zor' %}selected{% endif %}>Zor</option>
-                        </select>
-                    </div>
+                        <div class="mb-3">
+                            <label for="difficulty" class="form-label">Zorluk Seviyesi</label>
+                            <select class="form-select" id="difficulty" name="difficulty" required>
+                                <option value="">Zorluk Seviyesi Seçin</option>
+                                <option value="Kolay" {% if question.DifficultyLevel == 'Kolay' %}selected{% endif %}>Kolay</option>
+                                <option value="Orta" {% if question.DifficultyLevel == 'Orta' %}selected{% endif %}>Orta</option>
+                                <option value="Zor" {% if question.DifficultyLevel == 'Zor' %}selected{% endif %}>Zor</option>
+                            </select>
+                        </div>
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">İptal</a>
-                    </div>
-                </form>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Değişiklikleri Kaydet
+                            </button>
+                            <a href="{{ url_for('questions') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Geri Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

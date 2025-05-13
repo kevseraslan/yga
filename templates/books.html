@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Kitap Takibi - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-book-open"></i> Kitap Takibi
+                    </h4>
+                    <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                        <i class="fas fa-plus"></i> Yeni Kitap Ekle
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if not books %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Henüz kitap eklenmemiş</h5>
+                        <p class="text-muted">Okumaya başlamak için yeni bir kitap ekleyin!</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                            <i class="fas fa-plus"></i> İlk Kitabını Ekle
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="list-group">
+                        {% for book in books %}
+                        <div class="list-group-item border-0 shadow-sm mb-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1 text-primary">{{ book.Title }}</h5>
+                                    <p class="mb-1 text-muted">
+                                        <i class="fas fa-user-edit"></i> {{ book.Author }}
+                                    </p>
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ (book.CurrentPage / book.TotalPages * 100) if book.TotalPages else 0 }}%;" 
+                                             aria-valuenow="{{ (book.CurrentPage / book.TotalPages * 100) if book.TotalPages else 0 }}" 
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-bookmark"></i> İlerleme: %{{ (book.CurrentPage / book.TotalPages * 100) if book.TotalPages else 0 }}
+                                        ({{ book.CurrentPage }}/{{ book.TotalPages }} sayfa)
+                                    </small>
+                                </div>
+                                <div class="btn-group ms-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                                            data-bs-toggle="modal" data-bs-target="#addQuoteModal" 
+                                            data-book-id="{{ book.BookId }}" data-book-title="{{ book.Title }}">
+                                        <i class="fas fa-quote-right"></i> Alıntı Ekle
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                            data-bs-toggle="modal" data-bs-target="#editBookModal"
+                                            data-book-id="{{ book.BookId }}"
+                                            data-title="{{ book.Title }}"
+                                            data-author="{{ book.Author }}"
+                                            data-current-page="{{ book.CurrentPage }}"
+                                            data-total-pages="{{ book.TotalPages }}">
+                                        <i class="fas fa-edit"></i> Düzenle
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm delete-book" 
+                                            data-book-id="{{ book.BookId }}">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if book.quotes %}
+                            <div class="mt-3">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-quote-left"></i> Alıntılar
+                                </h6>
+                                <div class="list-group">
+                                    {% for quote in book.quotes %}
+                                    <div class="list-group-item bg-light border-0 rounded mb-2">
+                                        <p class="mb-1 fst-italic">"{{ quote.Content }}"</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-bookmark"></i> Sayfa: {{ quote.PageNumber }}
+                                        </small>
+                                        <div class="btn-group float-end">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm edit-quote"
+                                                    data-quote-id="{{ quote.QuoteId }}"
+                                                    data-content="{{ quote.Content }}"
+                                                    data-page="{{ quote.PageNumber }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm delete-quote"
+                                                    data-quote-id="{{ quote.QuoteId }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni Kitap Ekleme Modal -->
+<div class="modal fade" id="addBookModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> Yeni Kitap Ekle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addBookForm" method="POST" action="{{ url_for('add_book') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Kitap Adı</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="author" class="form-label">Yazar</label>
+                        <input type="text" class="form-control" id="author" name="author" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="total_pages" class="form-label">Toplam Sayfa Sayısı</label>
+                        <input type="number" class="form-control" id="total_pages" name="total_pages" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="current_page" class="form-label">Şu anki Sayfa</label>
+                        <input type="number" class="form-control" id="current_page" name="current_page" min="1" value="1">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alıntı Ekleme Modal -->
+<div class="modal fade" id="addQuoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Alıntı Ekle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addQuoteForm" method="POST" action="{{ url_for('add_quote', book_id=0) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="book_id" id="quoteBookId">
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Alıntı</label>
+                        <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="page_number" class="form-label">Sayfa Numarası</label>
+                        <input type="number" class="form-control" id="page_number" name="page_number" min="1">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kitap Düzenleme Modal -->
+<div class="modal fade" id="editBookModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i> Kitabı Düzenle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editBookForm" method="POST" action="{{ url_for('edit_book', book_id=0) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="book_id" id="editBookId">
+                    <div class="mb-3">
+                        <label for="editTitle" class="form-label">Kitap Adı</label>
+                        <input type="text" class="form-control" id="editTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAuthor" class="form-label">Yazar</label>
+                        <input type="text" class="form-control" id="editAuthor" name="author" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTotalPages" class="form-label">Toplam Sayfa Sayısı</label>
+                        <input type="number" class="form-control" id="editTotalPages" name="total_pages" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCurrentPage" class="form-label">Şu anki Sayfa</label>
+                        <input type="number" class="form-control" id="editCurrentPage" name="current_page" min="1" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Alıntı ekleme modalını hazırla
+    const addQuoteModal = document.getElementById('addQuoteModal');
+    addQuoteModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const bookId = button.getAttribute('data-book-id');
+        const bookTitle = button.getAttribute('data-book-title');
+        
+        const modalTitle = this.querySelector('.modal-title');
+        modalTitle.textContent = `${bookTitle} - Alıntı Ekle`;
+        
+        const form = this.querySelector('#addQuoteForm');
+        form.action = `/add-quote/${bookId}`;
+        form.querySelector('#quoteBookId').value = bookId;
+    });
+    
+    // Kitap düzenleme modalını hazırla
+    const editBookModal = document.getElementById('editBookModal');
+    editBookModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const bookId = button.getAttribute('data-book-id');
+        const title = button.getAttribute('data-title');
+        const author = button.getAttribute('data-author');
+        const currentPage = button.getAttribute('data-current-page');
+        const totalPages = button.getAttribute('data-total-pages');
+        
+        const form = this.querySelector('#editBookForm');
+        form.action = `/edit-book/${bookId}`;
+        form.querySelector('#editBookId').value = bookId;
+        form.querySelector('#editTitle').value = title;
+        form.querySelector('#editAuthor').value = author;
+        form.querySelector('#editCurrentPage').value = currentPage;
+        form.querySelector('#editTotalPages').value = totalPages;
+    });
+    
+    // Kitap silme işlemi
+    document.querySelectorAll('.delete-book').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Bu kitabı silmek istediğinizden emin misiniz?')) {
+                const bookId = this.getAttribute('data-book-id');
+                fetch(`/delete-book/${bookId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Kitap silinirken bir hata oluştu.');
+                    }
+                });
+            }
+        });
+    });
+    
+    // Alıntı silme işlemi
+    document.querySelectorAll('.delete-quote').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Bu alıntıyı silmek istediğinizden emin misiniz?')) {
+                const quoteId = this.getAttribute('data-quote-id');
+                fetch(`/delete-quote/${quoteId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Alıntı silinirken bir hata oluştu.');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

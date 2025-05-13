@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Görev Düzenle - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> Görev Düzenle
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('edit_task', task_id=task.TaskId) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Başlık</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ task.Title }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3">{{ task.Description }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="due_date" class="form-label">Bitiş Tarihi</label>
+                            <input type="datetime-local" class="form-control" id="due_date" 
+                                   name="due_date" value="{{ task.DueDate.strftime('%Y-%m-%dT%H:%M') }}" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="priority" class="form-label">Öncelik</label>
+                                <select class="form-select" id="priority" name="priority" required>
+                                    <option value="low" {{ 'selected' if task.Priority == 'low' }}>Düşük</option>
+                                    <option value="medium" {{ 'selected' if task.Priority == 'medium' }}>Orta</option>
+                                    <option value="high" {{ 'selected' if task.Priority == 'high' }}>Yüksek</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="category" class="form-label">Kategori</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="work" {{ 'selected' if task.Category == 'work' }}>İş</option>
+                                    <option value="personal" {{ 'selected' if task.Category == 'personal' }}>Kişisel</option>
+                                    <option value="study" {{ 'selected' if task.Category == 'study' }}>Çalışma</option>
+                                    <option value="hobby" {{ 'selected' if task.Category == 'hobby' }}>Hobi</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('tasks') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Geri Dön
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Değişiklikleri Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

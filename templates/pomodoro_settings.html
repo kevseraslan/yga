@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Pomodoro Ayarları - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Pomodoro Ayarları</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form id="pomodoroSettingsForm">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Çalışma Süresi (dakika)</label>
+                        <input type="number" class="form-control" id="workDuration" min="1" max="60" value="25">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Kısa Mola Süresi (dakika)</label>
+                        <input type="number" class="form-control" id="shortBreakDuration" min="1" max="30" value="5">
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Uzun Mola Süresi (dakika)</label>
+                        <input type="number" class="form-control" id="longBreakDuration" min="1" max="60" value="15">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Uzun Mola Öncesi Pomodoro Sayısı</label>
+                        <input type="number" class="form-control" id="pomodorosUntilLongBreak" min="1" max="10" value="4">
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoStartBreaks" checked>
+                            <label class="form-check-label">Molaları otomatik başlat</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoStartPomodoros" checked>
+                            <label class="form-check-label">Pomodoro'ları otomatik başlat</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="playSound" checked>
+                            <label class="form-check-label">Bildirim sesi çal</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showNotifications" checked>
+                            <label class="form-check-label">Bildirimleri göster</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Ayarları Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveSettings() {
+    const settings = {
+        workDuration: parseInt(document.getElementById('workDuration').value),
+        shortBreakDuration: parseInt(document.getElementById('shortBreakDuration').value),
+        longBreakDuration: parseInt(document.getElementById('longBreakDuration').value),
+        pomodorosUntilLongBreak: parseInt(document.getElementById('pomodorosUntilLongBreak').value),
+        autoStartBreaks: document.getElementById('autoStartBreaks').checked,
+        autoStartPomodoros: document.getElementById('autoStartPomodoros').checked,
+        playSound: document.getElementById('playSound').checked,
+        showNotifications: document.getElementById('showNotifications').checked
+    };
+    
+    // Ayarları localStorage'a kaydet
+    localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
+    
+    // Başarılı mesajı göster
+    alert('Ayarlar başarıyla kaydedildi!');
+}
+
+// Sayfa yüklendiğinde mevcut ayarları yükle
+document.addEventListener('DOMContentLoaded', function() {
+    const savedSettings = localStorage.getItem('pomodoroSettings');
+    if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        document.getElementById('workDuration').value = settings.workDuration;
+        document.getElementById('shortBreakDuration').value = settings.shortBreakDuration;
+        document.getElementById('longBreakDuration').value = settings.longBreakDuration;
+        document.getElementById('pomodorosUntilLongBreak').value = settings.pomodorosUntilLongBreak;
+        document.getElementById('autoStartBreaks').checked = settings.autoStartBreaks;
+        document.getElementById('autoStartPomodoros').checked = settings.autoStartPomodoros;
+        document.getElementById('playSound').checked = settings.playSound;
+        document.getElementById('showNotifications').checked = settings.showNotifications;
+    }
+});
+</script>
+{% endblock %} 

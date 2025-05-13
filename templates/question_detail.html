@@ -3,273 +3,407 @@
 {% block title %}Soru Detayı - ReviseMe{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <span class="badge bg-{{ 'success' if question.DifficultyLevel == 'Kolay' else 'warning' if question.DifficultyLevel == 'Orta' else 'danger' }}">
-                            {{ question.DifficultyLevel }}
-                        </span>
-                        <span class="ms-2">{{ question.Category.Name }}</span>
-                    </h5>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-                            <i class="bi bi-pencil"></i> Not Al
-                        </button>
-                        <button type="button" class="btn btn-{{ 'danger' if is_favorite else 'outline-danger' }} btn-sm" onclick="toggleFavorite({{ question.QuestionId }})">
-                            <i class="bi bi-heart{{ '-fill' if is_favorite else '' }}"></i> Favori
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteQuestion({{ question.QuestionId }})">
-                            <i class="bi bi-trash"></i> Sil
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" onclick="skipQuestion({{ question.QuestionId }})">
-                            <i class="bi bi-skip-forward"></i> Atla
-                        </button>
-                        <button type="button" class="btn btn-success btn-sm" onclick="markAsCompleted({{ question.QuestionId }})">
-                            <i class="bi bi-check-circle"></i> Tamamlandı
-                        </button>
+<!-- CSRF Token'ı meta tag olarak ekle -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Geri Dön Butonu -->
+            <div class="mb-4">
+                <a href="{{ url_for('questions') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Sorulara Dön
+                </a>
+            </div>
+
+            <!-- Soru Başlığı ve Kategori -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Soru Detayı</h4>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">{{ question.Category.Name }}</span>
+                            <span class="badge bg-light text-dark me-2">{{ question.DifficultyLevel }}</span>
+                            <span class="badge bg-light text-dark">Tekrar: {{ question.RepeatCount }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card-body">
-                {% if question.PhotoPath %}
-                <div class="text-center mb-4">
-                    <img src="{{ url_for('static', filename=question.PhotoPath) }}" class="img-fluid" alt="Soru Görseli">
-                </div>
-                {% endif %}
-                <div class="mb-4">
-                    <h6>Soru İçeriği:</h6>
-                    <p>{{ question.Content }}</p>
-                </div>
-                
-                <div class="mb-4">
-                    <h6>Notlar:</h6>
-                    {% if question.notes %}
-                        <div class="list-group">
-                            {% for note in question.notes %}
-                                <div class="list-group-item">
-                                    <p class="mb-0">{{ note.Content }}</p>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Henüz not eklenmemiş.</p>
+
+            <!-- Soru İçeriği -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">{{ question.Content }}</h5>
+                    {% if question.PhotoPath %}
+                    <div class="mb-3">
+                        <img src="{{ url_for('static', filename=question.PhotoPath) }}" class="img-fluid rounded" alt="Soru Görseli">
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            <div class="card-footer">
-                <a href="{{ url_for('past_questions') }}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Geri
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Not Ekleme Modal -->
-<div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addNoteModalLabel">Not Ekle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addNoteForm">
-                    <div class="mb-3">
-                        <label for="noteContent" class="form-label">Not İçeriği</label>
-                        <textarea class="form-control" id="noteContent" rows="3" required></textarea>
+            <!-- İşlem Butonları -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary w-100" id="toggleFavorite">
+                                <i class="fas fa-star{% if not is_favorite %}-o{% endif %}"></i>
+                                <span>{% if is_favorite %}Favorilerden Çıkar{% else %}Favorilere Ekle{% endif %}</span>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-danger w-100" id="deleteQuestion">
+                                <i class="fas fa-trash"></i> Sil
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-success w-100" id="markCompleted">
+                                <i class="fas fa-check"></i> Tamamlandı
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-info w-100" id="skipQuestion">
+                                <i class="fas fa-forward"></i> Soruyu Atla
+                            </button>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" onclick="addNote({{ question.QuestionId }})">Kaydet</button>
+
+            <!-- Tekrar Durumu -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Tekrar Durumu</h5>
+                        <button type="button" class="btn btn-light btn-sm" id="updateRepeatCount">
+                            <i class="fas fa-sync"></i> Tekrar Yapıldı
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 {% if repeat_status.dates.repeat1.date() == now.date() %}bg-light rounded{% endif %}">
+                                <h6>1. Tekrar</h6>
+                                <p class="mb-0">{{ repeat_status.dates.repeat1.strftime('%d.%m.%Y') }}</p>
+                                {% if repeat_status.dates.repeat1.date() == now.date() %}
+                                <span class="badge bg-success">Bugün</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 {% if repeat_status.dates.repeat2.date() == now.date() %}bg-light rounded{% endif %}">
+                                <h6>2. Tekrar</h6>
+                                <p class="mb-0">{{ repeat_status.dates.repeat2.strftime('%d.%m.%Y') }}</p>
+                                {% if repeat_status.dates.repeat2.date() == now.date() %}
+                                <span class="badge bg-success">Bugün</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 {% if repeat_status.dates.repeat3.date() == now.date() %}bg-light rounded{% endif %}">
+                                <h6>3. Tekrar</h6>
+                                <p class="mb-0">{{ repeat_status.dates.repeat3.strftime('%d.%m.%Y') }}</p>
+                                {% if repeat_status.dates.repeat3.date() == now.date() %}
+                                <span class="badge bg-success">Bugün</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notlar -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Notlar</h5>
+                </div>
+                <div class="card-body">
+                    <form id="noteForm" class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="noteContent" placeholder="Yeni not ekle...">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Ekle
+                            </button>
+                        </div>
+                    </form>
+                    <div id="notesList">
+                        {% for note in question.notes %}
+                        <div class="note-item mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <p class="mb-0">{{ note.Content }}</p>
+                                <small class="text-muted">{{ note.CreatedAt.strftime('%d.%m.%Y %H:%M') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<style>
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn i {
+    font-size: 1rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.badge {
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+}
+
+.note-item {
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+</style>
+
 <script>
-function addNote(questionId) {
-    const noteContent = document.getElementById('noteContent').value;
-    if (!noteContent || noteContent.trim() === '') {
-        showToast('Lütfen not içeriğini girin.', 'error');
-        return;
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF token'ı al
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const questionId = "{{ question.QuestionId }}";
 
-    fetch(`/add_note/${questionId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: noteContent.trim() })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Not başarıyla eklendi.', 'success');
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showToast(data.error || 'Not eklenirken bir hata oluştu.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Not eklenirken bir hata oluştu.', 'error');
-    });
-}
-
-function toggleFavorite(questionId) {
-    console.log('Favori durumu değiştiriliyor:', questionId);
-    fetch(`/toggle_favorite/${questionId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Favori yanıtı:', data);
-        if (data.success) {
-            const favoriteButton = document.querySelector(`button[onclick="toggleFavorite(${questionId})"]`);
-            if (favoriteButton) {
-                if (data.is_favorite) {
-                    favoriteButton.classList.remove('btn-outline-danger');
-                    favoriteButton.classList.add('btn-danger');
-                    favoriteButton.innerHTML = '<i class="bi bi-heart-fill"></i> Favori';
-                } else {
-                    favoriteButton.classList.remove('btn-danger');
-                    favoriteButton.classList.add('btn-outline-danger');
-                    favoriteButton.innerHTML = '<i class="bi bi-heart"></i> Favori';
+    // Favori butonu işlevi
+    const toggleFavoriteBtn = document.getElementById('toggleFavorite');
+    if (toggleFavoriteBtn) {
+        toggleFavoriteBtn.addEventListener('click', function() {
+            fetch(`/toggle_favorite/${questionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
                 }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = this.querySelector('i');
+                    const text = this.querySelector('span');
+                    if (data.is_favorite) {
+                        icon.classList.remove('fa-star-o');
+                        icon.classList.add('fa-star');
+                        text.textContent = 'Favorilerden Çıkar';
+                    } else {
+                        icon.classList.remove('fa-star');
+                        icon.classList.add('fa-star-o');
+                        text.textContent = 'Favorilere Ekle';
+                    }
+                } else {
+                    alert('Bir hata oluştu: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                alert('Bir hata oluştu.');
+            });
+        });
+    }
+
+    // Silme butonu işlevi
+    const deleteBtn = document.getElementById('deleteQuestion');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            if (confirm('Bu soruyu silmek istediğinizden emin misiniz?')) {
+                fetch(`/delete_question/${questionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/questions';
+                    } else {
+                        alert('Bir hata oluştu: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Bir hata oluştu.');
+                });
             }
-            showToast(data.message, 'success');
-        } else {
-            showToast(data.error || 'Favori durumu güncellenirken bir hata oluştu.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Favori hatası:', error);
-        showToast('Favori durumu güncellenirken bir hata oluştu.', 'error');
-    });
-}
-
-function deleteQuestion(questionId) {
-    if (!confirm('Bu soruyu silmek istediğinizden emin misiniz?')) {
-        return;
+        });
     }
 
-    console.log('Soru siliniyor:', questionId);
-    fetch(`/delete_question/${questionId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Silme yanıtı:', data);
-        if (data.success) {
-            showToast('Soru başarıyla silindi.', 'success');
-            setTimeout(() => window.location.href = '/past-questions', 1000);
-        } else {
-            showToast(data.error || 'Soru silinirken bir hata oluştu.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Silme hatası:', error);
-        showToast('Soru silinirken bir hata oluştu.', 'error');
-    });
-}
-
-function skipQuestion(questionId) {
-    if (!confirm('Bu soruyu atlamak istediğinizden emin misiniz?')) {
-        return;
-    }
-
-    console.log('Soru atlanıyor:', questionId);
-    fetch(`/skip_question/${questionId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Atlama yanıtı:', data);
-        if (data.success) {
-            showToast('Soru başarıyla atlandı.', 'success');
-            if (data.next_question_id) {
-                setTimeout(() => window.location.href = `/question_detail/${data.next_question_id}`, 1000);
-            } else {
-                setTimeout(() => window.location.href = '/past-questions', 1000);
+    // Tamamlandı butonu işlevi
+    const markCompletedBtn = document.getElementById('markCompleted');
+    if (markCompletedBtn) {
+        markCompletedBtn.addEventListener('click', function() {
+            if (confirm('Bu soruyu tamamlandı olarak işaretlemek istediğinizden emin misiniz?')) {
+                fetch(`/mark_completed/${questionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/questions';
+                    } else {
+                        alert('Bir hata oluştu: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Bir hata oluştu.');
+                });
             }
-        } else {
-            showToast(data.error || 'Soru atlanırken bir hata oluştu.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Atlama hatası:', error);
-        showToast('Soru atlanırken bir hata oluştu.', 'error');
-    });
-}
-
-function markAsCompleted(questionId) {
-    if (!confirm('Bu soruyu tamamlandı olarak işaretlemek istediğinizden emin misiniz?')) {
-        return;
+        });
     }
 
-    console.log('Soru tamamlanıyor:', questionId);
-    fetch(`/mark_completed/${questionId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Tamamlama yanıtı:', data);
-        if (data.success) {
-            showToast('Soru başarıyla tamamlandı.', 'success');
-            setTimeout(() => window.location.href = '/past-questions', 1000);
-        } else {
-            showToast(data.error || 'Soru durumu güncellenirken bir hata oluştu.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Tamamlama hatası:', error);
-        showToast('Soru durumu güncellenirken bir hata oluştu.', 'error');
-    });
-}
+    // Soruyu atla butonu işlevi
+    const skipBtn = document.getElementById('skipQuestion');
+    if (skipBtn) {
+        skipBtn.addEventListener('click', function() {
+            fetch(`/skip_question/${questionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.next_question_id) {
+                        window.location.href = `/question_detail/${data.next_question_id}`;
+                    } else {
+                        window.location.href = '/questions';
+                    }
+                } else {
+                    alert('Bir hata oluştu: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                alert('Bir hata oluştu.');
+            });
+        });
+    }
 
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
-    
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-    
-    toast.addEventListener('hidden.bs.toast', () => {
-        toast.remove();
-    });
-}
+    // Not ekleme
+    const noteForm = document.getElementById('noteForm');
+    if (noteForm) {
+        noteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content = document.getElementById('noteContent').value.trim();
+            
+            if (!content) {
+                alert('Lütfen bir not girin.');
+                return;
+            }
+            
+            fetch(`/add_note/${questionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ content: content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const notesList = document.getElementById('notesList');
+                    const noteHtml = `
+                        <div class="note-item mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <p class="mb-0">${data.note.content}</p>
+                                <small class="text-muted">${data.note.created_at}</small>
+                            </div>
+                        </div>
+                    `;
+                    notesList.insertAdjacentHTML('afterbegin', noteHtml);
+                    document.getElementById('noteContent').value = '';
+                } else {
+                    alert(data.error || 'Not eklenirken bir hata oluştu.');
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                alert('Not eklenirken bir hata oluştu.');
+            });
+        });
+    }
+
+    // Tekrar sayısı güncelleme
+    const updateRepeatBtn = document.getElementById('updateRepeatCount');
+    if (updateRepeatBtn) {
+        updateRepeatBtn.addEventListener('click', function() {
+            fetch(`/update_repeat_count/${questionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const repeatBadge = document.querySelector('.badge.bg-light.text-dark:last-child');
+                    repeatBadge.textContent = `Tekrar: ${data.repeat_count}`;
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Tekrar sayısı güncellenirken bir hata oluştu.');
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                alert('Tekrar sayısı güncellenirken bir hata oluştu.');
+            });
+        });
+    }
+});
 </script>
 {% endblock %} 

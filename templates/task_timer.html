@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h2 class="card-title mb-4">{{ task.Title }}</h2>
+                    <p class="card-text">{{ task.Description }}</p>
+                    
+                    <div class="timer-display mb-4">
+                        <h1 class="display-1" id="timer">00:00:00</h1>
+                    </div>
+                    
+                    <div class="timer-controls">
+                        <button id="startTimer" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-play"></i> Başlat
+                        </button>
+                        <button id="stopTimer" class="btn btn-danger btn-lg" disabled>
+                            <i class="fas fa-stop"></i> Durdur
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('tasks') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Görevlere Dön
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startButton = document.getElementById('startTimer');
+    const stopButton = document.getElementById('stopTimer');
+    const timerDisplay = document.getElementById('timer');
+    let timerInterval;
+    let seconds = 0;
+    let timeId = null;
+
+    startButton.addEventListener('click', function() {
+        fetch(`/start-timer/{{ task.TaskId }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                timeId = data.time_id;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+                    timerDisplay.textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }, 1000);
+            } else {
+                alert('Zamanlayıcı başlatılırken bir hata oluştu: ' + data.error);
+            }
+        });
+    });
+
+    stopButton.addEventListener('click', function() {
+        if (!timeId) return;
+        
+        fetch(`/stop-timer/${timeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                clearInterval(timerInterval);
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                alert(`Görev için ${data.duration} dakika çalıştınız!`);
+                window.location.href = "{{ url_for('tasks') }}";
+            } else {
+                alert('Zamanlayıcı durdurulurken bir hata oluştu: ' + data.error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

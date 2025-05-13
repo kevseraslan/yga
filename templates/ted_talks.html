@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}TEDx Konuşmaları - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">TEDx Konuşmaları</h2>
+            
+            <div class="row">
+                {% for talk in talks %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ talk.Title }}</h5>
+                            <span class="badge bg-light text-dark">{{ talk.Duration }} dk</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="ratio ratio-16x9 mb-3">
+                                <iframe src="{{ talk.VideoUrl }}" 
+                                        title="{{ talk.Title }}" 
+                                        allowfullscreen></iframe>
+                            </div>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ talk.Speaker }}</h6>
+                            <p class="card-text">{{ talk.Description }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info">{{ talk.Category }}</span>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary mark-watched" 
+                                            data-talk-id="{{ talk.TalkId }}"
+                                            {% if talk.IsWatched %}disabled{% endif %}>
+                                        <i class="fas fa-check"></i> 
+                                        {% if talk.IsWatched %}İzlenmiş{% else %}İzlendi{% endif %}
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-talk" 
+                                            data-talk-id="{{ talk.TalkId }}">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // İzlenmiş olarak işaretleme
+    document.querySelectorAll('.mark-watched').forEach(button => {
+        button.addEventListener('click', function() {
+            const talkId = this.dataset.talkId;
+            fetch(`/mark-talk-watched/${talkId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-check"></i> İzlenmiş';
+                } else {
+                    alert(data.error || 'Konuşma işaretlenirken bir hata oluştu.');
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                alert('Konuşma işaretlenirken bir hata oluştu.');
+            });
+        });
+    });
+
+    // Konuşma silme
+    document.querySelectorAll('.delete-talk').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Bu konuşmayı silmek istediğinizden emin misiniz?')) {
+                const talkId = this.dataset.talkId;
+                fetch(`/delete-talk/${talkId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.closest('.col-md-6').remove();
+                    } else {
+                        alert(data.error || 'Konuşma silinirken bir hata oluştu.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Konuşma silinirken bir hata oluştu.');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

@@ -1,73 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}Favori Sorularım - ReviseMe{% endblock %}
+{% block title %}Favorilerim - ReviseMe{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Favori Sorularım</h2>
+    <!-- Sekmeli Menü (Modern, Renkli, İkonlu, Aktif sekme vurgulu) -->
+    <div class="mb-4">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('questions') }}" class="btn fw-bold text-white" style="background:#3574e6; min-width:160px;"><i class="fas fa-list"></i> Sorularım</a>
+            <a href="{{ url_for('add_question') }}" class="btn fw-bold text-white" style="background:#16a085; min-width:160px;"><i class="fas fa-plus"></i> Yeni Soru Ekle</a>
+            <a href="{{ url_for('favorites') }}" class="btn fw-bold text-black" style="background:#ffc107; min-width:160px; box-shadow:0 2px 8px #ffd70055;"><i class="fas fa-star"></i> Favorilerim</a>
+            <a href="{{ url_for('today_questions') }}" class="btn fw-bold text-white" style="background:#7b8a99; min-width:160px;"><i class="fas fa-calendar-alt"></i> Bugünün Soruları</a>
+            <a href="{{ url_for('past_questions') }}" class="btn fw-bold text-white" style="background:#23272b; min-width:160px;"><i class="fas fa-undo"></i> Geçmiş Sorular</a>
+            <a href="{{ url_for('reminders') }}" class="btn fw-bold text-primary border-primary" style="background:transparent; min-width:160px; border:2px solid #3574e6;"><i class="fas fa-bell"></i> Hatırlatıcılar</a>
+        </div>
     </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    {% if categories %}
-        {% for category in categories %}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h4 class="mb-0">{{ category.Name }}</h4>
-                </div>
+    <h2 class="mb-4">Favorilerim</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for question in questions %}
+        <div class="col">
+            <div class="card h-100">
+                {% if question.ImagePath or question.PhotoPath %}
+                <img src="{{ url_for('static', filename=question.ImagePath or question.PhotoPath) }}" class="card-img-top" alt="Soru Görseli" style="height: 140px; object-fit: cover;">
+                {% endif %}
                 <div class="card-body">
-                    <div class="row">
-                        {% for question in questions_by_category[category.CategoryId] %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
-                                {% if question.PhotoPath %}
-                                <div class="card-img-container" style="height: 200px; overflow: hidden;">
-                                    <img src="{{ url_for('static', filename=question.PhotoPath) }}" 
-                                         class="card-img-top" 
-                                         alt="Soru Görseli"
-                                         style="width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-                                {% else %}
-                                <div class="card-img-container" style="height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                                    <p class="text-muted">Görsel Yok</p>
-                                </div>
-                                {% endif %}
-                                <div class="card-body">
-                                    <h5 class="card-title">Soru #{{ question.QuestionId }}</h5>
-                                    <p class="card-text">{{ question.Content[:100] }}{% if question.Content|length > 100 %}...{% endif %}</p>
-                                    <p class="card-text"><small class="text-muted">Zorluk: {{ question.DifficultyLevel }}</small></p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <a href="{{ url_for('view_question', question_id=question.QuestionId) }}" class="btn btn-sm btn-primary">Görüntüle</a>
-                                        <form action="{{ url_for('toggle_favorite', question_id=question.QuestionId) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-star-fill"></i> Favorilerden Çıkar
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
+                    <h5 class="card-title">{{ question.Content[:100] }}{% if question.Content|length > 100 %}...{% endif %}</h5>
+                </div>
+                <div class="card-footer bg-white border-0 text-center">
+                    <a href="{{ url_for('view_question', question_id=question.QuestionId) }}" class="btn btn-primary w-100"><i class="fas fa-eye"></i> Görüntüle</a>
                 </div>
             </div>
-        {% endfor %}
-    {% else %}
-        <div class="alert alert-info">
-            Henüz favori sorunuz bulunmuyor. Soruları favorilere eklemek için soru görüntüleme sayfasındaki "Favorilere Ekle" butonunu kullanabilirsiniz.
         </div>
-    {% endif %}
+        {% endfor %}
+        {% if questions|length == 0 %}
+        <div class="alert alert-info mt-3">Favori soru bulunmuyor.</div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %} 

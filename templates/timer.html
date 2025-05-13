@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Sayaç - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width:600px;">
+    <h2 class="mb-4 text-center"><i class="fas fa-stopwatch"></i> Pomodoro Sayaç</h2>
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <div id="timerModeTitle" style="font-size:1.2rem; font-weight:600; margin-bottom:10px;">Odaklanma Zamanı</div>
+            <div id="timerDisplay" style="font-size:3rem; font-weight:bold;">25:00</div>
+            <div class="mt-3 d-flex justify-content-center gap-2">
+                <button class="btn btn-success" id="startBtn"><i class="fas fa-play"></i> Başlat</button>
+                <button class="btn btn-danger" id="stopBtn"><i class="fas fa-stop"></i> Durdur</button>
+                <button class="btn btn-secondary" id="resetBtn"><i class="fas fa-undo"></i> Sıfırla</button>
+                <button class="btn btn-primary" id="saveBtn"><i class="fas fa-save"></i> Kaydet</button>
+                <button class="btn btn-warning" id="skipBtn"><i class="fas fa-forward"></i> Mola Geç</button>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header bg-light fw-bold"><i class="fas fa-cog"></i> Ayarlar</div>
+        <div class="card-body">
+            <form id="pomodoroSettingsForm">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Çalışma Süresi (dk)</label>
+                        <input type="number" class="form-control" id="workDuration" min="1" max="60" value="25">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Kısa Mola (dk)</label>
+                        <input type="number" class="form-control" id="shortBreakDuration" min="1" max="30" value="5">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Uzun Mola (dk)</label>
+                        <input type="number" class="form-control" id="longBreakDuration" min="1" max="60" value="15">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Uzun Mola Öncesi Pomodoro</label>
+                        <input type="number" class="form-control" id="pomodorosUntilLongBreak" min="1" max="10" value="4">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoStartBreaks" checked>
+                            <label class="form-check-label">Molaları otomatik başlat</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoStartPomodoros" checked>
+                            <label class="form-check-label">Pomodoro'ları otomatik başlat</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="playSound" checked>
+                            <label class="form-check-label">Bildirim sesi çal</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showNotifications" checked>
+                            <label class="form-check-label">Bildirimleri göster</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Ayarları Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let timerInterval = null;
+let timerState = 'work'; // 'work', 'shortBreak', 'longBreak'
+let timerTimeLeft = 0;
+let pomodoroCount = 0;
+
+function getPomodoroSettings() {
+    const defaults = { workDuration: 25, shortBreakDuration: 5, longBreakDuration: 15, pomodorosUntilLongBreak: 4, autoStartBreaks: true, autoStartPomodoros: true, playSound: true, showNotifications: true };
+    try {
+        const settings = JSON.parse(localStorage.getItem('pomodoroSettings'));
+        return settings ? { ...defaults, ...settings } : defaults;
+    } catch { return defaults; }
+}
+
+function updateTimerDisplay() {
+    const min = String(Math.floor(timerTimeLeft / 60)).padStart(2, '0');
+    const sec = String(timerTimeLeft % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${min}:${sec}`;
+    let title = '';
+    if (timerState === 'work') title = 'Odaklanma Zamanı';
+    else if (timerState === 'shortBreak') title = 'Mola Zamanı';
+    else title = 'Uzun Mola Zamanı';
+    document.getElementById('timerModeTitle').textContent = title;
+}
+
+function savePomodoroState() {
+    localStorage.setItem('pomodoroTimer', JSON.stringify({
+        timerState,
+        timerTimeLeft,
+        pomodoroCount,
+        running: !!timerInterval
+    }));
+}
+
+function loadPomodoroState() {
+    const state = JSON.parse(localStorage.getItem('pomodoroTimer'));
+    const settings = getPomodoroSettings();
+    if (state) {
+        timerState = state.timerState || 'work';
+        if (state.timerTimeLeft !== undefined && state.timerTimeLeft !== null) {
+            timerTimeLeft = state.timerTimeLeft;
+        } else if (timerState === 'work') {
+            timerTimeLeft = settings.workDuration * 60;
+        } else if (timerState === 'shortBreak') {
+            timerTimeLeft = settings.shortBreakDuration * 60;
+        } else {
+            timerTimeLeft = settings.longBreakDuration * 60;
+        }
+        pomodoroCount = state.pomodoroCount || 0;
+        if (state.running) {
+            startTimer(true); // true: otomatik başlat
+        } else {
+            updateTimerDisplay();
+        }
+    } else {
+        timerState = 'work';
+        timerTimeLeft = settings.workDuration * 60;
+        pomodoroCount = 0;
+        updateTimerDisplay();
+    }
+}
+
+function startTimer(auto=false) {
+    const settings = getPomodoroSettings();
+    if (!timerTimeLeft) {
+        if (timerState === 'work') timerTimeLeft = settings.workDuration * 60;
+        else if (timerState === 'shortBreak') timerTimeLeft = settings.shortBreakDuration * 60;
+        else timerTimeLeft = settings.longBreakDuration * 60;
+    }
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if (timerTimeLeft > 0) {
+            timerTimeLeft--;
+            updateTimerDisplay();
+            savePomodoroState();
+        } else {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            savePomodoroState();
+            if (timerState === 'work') {
+                pomodoroCount++;
+                if (pomodoroCount % settings.pomodorosUntilLongBreak === 0) {
+                    timerState = 'longBreak';
+                } else {
+                    timerState = 'shortBreak';
+                }
+            } else {
+                timerState = 'work';
+            }
+            timerTimeLeft = 0;
+            updateTimerDisplay();
+            notifyPomodoro();
+            setTimeout(() => { 
+                if (getPomodoroSettings().autoStartBreaks && timerState !== 'work') startTimer(); 
+                else if (getPomodoroSettings().autoStartPomodoros && timerState === 'work') startTimer(); 
+            }, 1000);
+        }
+    }, 1000);
+    if (!auto) savePomodoroState();
+}
+
+function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    savePomodoroState();
+}
+
+function resetTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    const settings = getPomodoroSettings();
+    if (timerState === 'work') {
+        timerTimeLeft = settings.workDuration * 60;
+    } else if (timerState === 'shortBreak') {
+        timerTimeLeft = settings.shortBreakDuration * 60;
+    } else {
+        timerTimeLeft = settings.longBreakDuration * 60;
+    }
+    pomodoroCount = 0;
+    updateTimerDisplay();
+    savePomodoroState();
+}
+
+function notifyPomodoro() {
+    if (getPomodoroSettings().playSound) {
+        const audio = new Audio('https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa4c7b.mp3');
+        audio.play();
+    }
+    if (getPomodoroSettings().showNotifications && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+            new Notification('Pomodoro Zamanı!', { body: timerState === 'work' ? 'Çalışma zamanı!' : 'Mola zamanı!' });
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    }
+}
+
+function saveSettings() {
+    const settings = {
+        workDuration: parseInt(document.getElementById('workDuration').value),
+        shortBreakDuration: parseInt(document.getElementById('shortBreakDuration').value),
+        longBreakDuration: parseInt(document.getElementById('longBreakDuration').value),
+        pomodorosUntilLongBreak: parseInt(document.getElementById('pomodorosUntilLongBreak').value),
+        autoStartBreaks: document.getElementById('autoStartBreaks').checked,
+        autoStartPomodoros: document.getElementById('autoStartPomodoros').checked,
+        playSound: document.getElementById('playSound').checked,
+        showNotifications: document.getElementById('showNotifications').checked
+    };
+    localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
+    alert('Ayarlar başarıyla kaydedildi!');
+    resetTimer();
+}
+
+function saveTimer() {
+    const settings = getPomodoroSettings();
+    let totalSeconds = 0;
+    if (timerState === 'work') {
+        totalSeconds = settings.workDuration * 60 - timerTimeLeft;
+    } else if (timerState === 'shortBreak') {
+        totalSeconds = settings.shortBreakDuration * 60 - timerTimeLeft;
+    } else {
+        totalSeconds = settings.longBreakDuration * 60 - timerTimeLeft;
+    }
+    if (totalSeconds <= 0) {
+        alert('Kaydedilecek bir süre yok!');
+        return;
+    }
+    fetch('/save_timer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ seconds: totalSeconds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Çalışma süren başarıyla kaydedildi!');
+            resetTimer();
+        } else {
+            alert('Süre kaydedilirken bir hata oluştu.');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Ayarları yükle
+    const savedSettings = localStorage.getItem('pomodoroSettings');
+    if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        document.getElementById('workDuration').value = settings.workDuration;
+        document.getElementById('shortBreakDuration').value = settings.shortBreakDuration;
+        document.getElementById('longBreakDuration').value = settings.longBreakDuration;
+        document.getElementById('pomodorosUntilLongBreak').value = settings.pomodorosUntilLongBreak;
+        document.getElementById('autoStartBreaks').checked = settings.autoStartBreaks;
+        document.getElementById('autoStartPomodoros').checked = settings.autoStartPomodoros;
+        document.getElementById('playSound').checked = settings.playSound;
+        document.getElementById('showNotifications').checked = settings.showNotifications;
+    }
+    loadPomodoroState();
+    document.getElementById('startBtn').onclick = function() { startTimer(); };
+    document.getElementById('stopBtn').onclick = stopTimer;
+    document.getElementById('resetBtn').onclick = resetTimer;
+    document.getElementById('saveBtn').onclick = saveTimer;
+    document.getElementById('skipBtn').onclick = function() {
+        if (timerState === 'work') {
+            pomodoroCount++;
+            const settings = getPomodoroSettings();
+            if (pomodoroCount % settings.pomodorosUntilLongBreak === 0) {
+                timerState = 'longBreak';
+            } else {
+                timerState = 'shortBreak';
+            }
+        } else {
+            timerState = 'work';
+        }
+        resetTimer();
+        updateTimerDisplay();
+        savePomodoroState();
+    };
+    // Sayfa ilk açıldığında da başlık doğru görünsün
+    updateTimerDisplay();
+});
+</script>
+{% endblock %} 

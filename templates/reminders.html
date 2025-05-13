@@ -3,92 +3,123 @@
 {% block title %}Hatırlatıcılar - ReviseMe{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Geçmiş Tekrar Tarihli Sorular</h5>
-            </div>
-            <div class="card-body">
-                {% if reminders %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Soru</th>
-                                    <th>Kategori</th>
-                                    <th>Zorluk</th>
-                                    <th>Tekrar Tarihleri</th>
-                                    <th>İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for reminder in reminders %}
-                                    <tr>
-                                        <td>
-                                            {{ reminder.Content|truncate(100) }}
-                                            {% if reminder.PhotoPath %}
-                                                <br>
-                                                <small class="text-muted">
-                                                    <i class="bi bi-image"></i> Görsel mevcut
-                                                </small>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ reminder.CategoryName }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ 'success' if reminder.DifficultyLevel == 'Kolay' else 'warning' if reminder.DifficultyLevel == 'Orta' else 'danger' }}">
-                                                {{ reminder.DifficultyLevel }}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bell"></i> Hatırlatıcılar
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if reminders %}
+                        <div class="list-group">
+                            {% for question in reminders %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">
+                                            <span class="badge bg-{{ 'success' if question.DifficultyLevel == 'Kolay' else 'warning' if question.DifficultyLevel == 'Orta' else 'danger' }}">
+                                                {{ question.DifficultyLevel }}
                                             </span>
-                                        </td>
-                                        <td>
-                                            <ul class="list-unstyled mb-0">
-                                                {% if reminder.Repeat1Date and reminder.Repeat1Date < now %}
-                                                    <li>
-                                                        <small class="text-danger">
-                                                            <i class="bi bi-clock-history"></i> 1. Tekrar: {{ reminder.Repeat1Date.strftime('%d.%m.%Y %H:%M') }}
-                                                        </small>
-                                                    </li>
-                                                {% endif %}
-                                                {% if reminder.Repeat2Date and reminder.Repeat2Date < now %}
-                                                    <li>
-                                                        <small class="text-danger">
-                                                            <i class="bi bi-clock-history"></i> 2. Tekrar: {{ reminder.Repeat2Date.strftime('%d.%m.%Y %H:%M') }}
-                                                        </small>
-                                                    </li>
-                                                {% endif %}
-                                                {% if reminder.Repeat3Date and reminder.Repeat3Date < now %}
-                                                    <li>
-                                                        <small class="text-danger">
-                                                            <i class="bi bi-clock-history"></i> 3. Tekrar: {{ reminder.Repeat3Date.strftime('%d.%m.%Y %H:%M') }}
-                                                        </small>
-                                                    </li>
-                                                {% endif %}
-                                            </ul>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a href="{{ url_for('question_detail', question_id=reminder.QuestionId, source='reminders') }}" class="btn btn-primary">
-                                                    <i class="bi bi-eye"></i> Görüntüle
-                                                </a>
-                                                <a href="{{ url_for('edit_question', question_id=reminder.QuestionId) }}" 
-                                                   class="btn btn-sm btn-warning" 
-                                                   title="Soruyu Düzenle">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Geçmiş tekrar tarihi olan soru bulunmamaktadır.
-                    </div>
-                {% endif %}
+                                            {{ question.Category.Name }}
+                                        </h5>
+                                        <small>
+                                            {% if question.Repeat1Date and question.Repeat1Date < now %}
+                                                1. Tekrar: {{ question.Repeat1Date.strftime('%d.%m.%Y %H:%M') }}
+                                            {% elif question.Repeat2Date and question.Repeat2Date < now %}
+                                                2. Tekrar: {{ question.Repeat2Date.strftime('%d.%m.%Y %H:%M') }}
+                                            {% elif question.Repeat3Date and question.Repeat3Date < now %}
+                                                3. Tekrar: {{ question.Repeat3Date.strftime('%d.%m.%Y %H:%M') }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">{{ question.Content }}</p>
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('view_question', question_id=question.QuestionId) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye"></i> Görüntüle
+                                        </a>
+                                        <button class="btn btn-success btn-sm complete-question" data-question-id="{{ question.QuestionId }}">
+                                            <i class="fas fa-check"></i> Tamamla
+                                        </button>
+                                        <button class="btn btn-danger btn-sm delete-question" data-question-id="{{ question.QuestionId }}">
+                                            <i class="fas fa-trash"></i> Sil
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Şu anda hatırlatmanız gereken soru bulunmuyor.
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF token'ı al
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Soru tamamlama
+    document.querySelectorAll('.complete-question').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Bu soruyu tamamlamak istediğinizden emin misiniz?')) {
+                const questionId = this.dataset.questionId;
+                fetch(`/mark_completed/${questionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Soru tamamlanırken bir hata oluştu.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Bir hata oluştu.');
+                });
+            }
+        });
+    });
+
+    // Soru silme
+    document.querySelectorAll('.delete-question').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Bu soruyu silmek istediğinizden emin misiniz?')) {
+                const questionId = this.dataset.questionId;
+                fetch(`/delete-question/${questionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Soru silinirken bir hata oluştu.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Bir hata oluştu.');
+                });
+            }
+        });
+    });
+});
+</script>
 {% endblock %} 

@@ -1,173 +1,200 @@
 {% extends "base.html" %}
 
-{% block title %}Tekrar Durumu - ReviseMe{% endblock %}
+{% block title %}Soru Detayı - ReviseMe{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <span class="badge bg-{{ 'success' if question.DifficultyLevel == 'Kolay' else 'warning' if question.DifficultyLevel == 'Orta' else 'danger' }}">
-                        {{ question.DifficultyLevel }}
-                    </span>
-                    {{ question.Category.Name }}
-                </h5>
-                {% if not question.IsCompleted %}
-                    <form action="{{ url_for('mark_completed', question_id=question.QuestionId) }}" method="POST" class="d-inline" onsubmit="return handleSubmit(event)">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check-circle"></i> Tamamlandı
-                        </button>
-                    </form>
-                {% else %}
-                    <span class="badge bg-info">Tamamlandı</span>
-                {% endif %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Ana İçerik -->
+        <main class="col-12 px-md-4">
+            <!-- Üst Menü -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Soru Detayı</h1>
+                <div>
+                    <a href="{{ url_for('questions') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Geri Dön
+                    </a>
+                    <button onclick="toggleFavorite({{ question.QuestionId }})" class="btn {{ 'btn-warning' if is_favorite else 'btn-outline-warning' }}">
+                        <i class="fas fa-star"></i> {{ 'Favorilerden Çıkar' if is_favorite else 'Favorilere Ekle' }}
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="mb-4">
-                    <h5>Tekrar Durumu:</h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Tekrar Sayısı</th>
-                                    <th>Durum</th>
-                                    <th>Tekrar Tarihi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1. Tekrar</td>
-                                    <td>
-                                        {% if repeat_status.count >= 1 %}
-                                            <span class="badge bg-success">Tamamlandı</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Bekliyor</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if repeat_status.dates.repeat1 %}
-                                            {{ repeat_status.dates.repeat1.strftime('%d.%m.%Y %H:%M') }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>2. Tekrar</td>
-                                    <td>
-                                        {% if repeat_status.count >= 2 %}
-                                            <span class="badge bg-success">Tamamlandı</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Bekliyor</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if repeat_status.dates.repeat2 %}
-                                            {{ repeat_status.dates.repeat2.strftime('%d.%m.%Y %H:%M') }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>3. Tekrar</td>
-                                    <td>
-                                        {% if repeat_status.count >= 3 %}
-                                            <span class="badge bg-success">Tamamlandı</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Bekliyor</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if repeat_status.dates.repeat3 %}
-                                            {{ repeat_status.dates.repeat3.strftime('%d.%m.%Y %H:%M') }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+            <!-- Soru Detayı -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        {% if question.ImagePath %}
+                        <img src="{{ url_for('static', filename=question.ImagePath) }}" class="card-img-top" alt="Soru Görseli" style="max-height: 400px; object-fit: contain;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">Soru İçeriği</h5>
+                            <p class="card-text">{{ question.Content }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <span class="badge bg-primary">{{ question.category.Name if question.category else 'Kategorisiz' }}</span>
+                                    {% if question.DifficultyLevel %}
+                                    <span class="badge bg-secondary">{{ question.DifficultyLevel }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('edit_question', question_id=question.QuestionId) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Düzenle
+                                    </a>
+                                    <button onclick="deleteQuestion({{ question.QuestionId }})" class="btn btn-outline-danger">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </button>
+                                    <button onclick="markCompleted({{ question.QuestionId }})" class="btn btn-success">
+                                        <i class="fas fa-check"></i> Tamamlandı
+                                    </button>
+                                    <button onclick="skipQuestion({{ question.QuestionId }})" class="btn btn-warning">
+                                        <i class="fas fa-forward"></i> Soruyu Atla
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <small class="text-muted">Tekrar 1: {{ question.Repeat1Date.strftime('%d.%m.%Y') }}</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Tekrar 2: {{ question.Repeat2Date.strftime('%d.%m.%Y') }}</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Tekrar 3: {{ question.Repeat3Date.strftime('%d.%m.%Y') }}</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('past_questions') }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Geri
-                    </a>
+
+                <!-- Notlar -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Notlar</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="noteForm" class="mb-3">
+                                <div class="mb-3">
+                                    <textarea class="form-control" id="noteContent" rows="3" placeholder="Not ekle..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Not Ekle
+                                </button>
+                            </form>
+                            
+                            <div id="notesList">
+                                {% for note in notes %}
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <p class="card-text">{{ note.Content }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-function handleSubmit(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const button = form.querySelector('button[type="submit"]');
-    
-    // Butonu devre dışı bırak
-    button.disabled = true;
-    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> İşleniyor...';
-    
-    fetch(form.action, {
+function toggleFavorite(questionId) {
+    fetch(`/toggle_favorite/${questionId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Başarılı mesajı göster
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-success alert-dismissible fade show';
-            alertDiv.innerHTML = `
-                <i class="bi bi-check-circle"></i> ${data.message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.querySelector('.card-body').prepend(alertDiv);
-            
-            // Sayfayı yenile
-            setTimeout(() => {
-                window.location.href = '/past-questions';
-            }, 1500);
+            location.reload();
         } else {
-            // Hata mesajını göster
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-            alertDiv.innerHTML = `
-                <i class="bi bi-exclamation-triangle"></i> ${data.error}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.querySelector('.card-body').prepend(alertDiv);
-            
-            // Butonu tekrar aktif et
-            button.disabled = false;
-            button.innerHTML = '<i class="bi bi-check-circle"></i> Tamamlandı';
+            alert('Favori durumu güncellenirken bir hata oluştu.');
+        }
+    });
+}
+
+function deleteQuestion(questionId) {
+    if (confirm('Bu soruyu silmek istediğinizden emin misiniz?')) {
+        fetch(`/delete_question/${questionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{{ url_for('questions') }}";
+            } else {
+                alert('Soru silinirken bir hata oluştu.');
+            }
+        });
+    }
+}
+
+function markCompleted(questionId) {
+    fetch(`/complete_question/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .catch(error => {
-        console.error('Hata:', error);
-        
-        // Hata mesajını göster
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-        alertDiv.innerHTML = `
-            <i class="bi bi-exclamation-triangle"></i> İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.querySelector('.card-body').prepend(alertDiv);
-        
-        // Butonu tekrar aktif et
-        button.disabled = false;
-        button.innerHTML = '<i class="bi bi-check-circle"></i> Tamamlandı';
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Soru tamamlandı olarak işaretlendi!');
+            window.location.href = "{{ url_for('questions') }}";
+        } else {
+            alert('Soru tamamlanırken bir hata oluştu.');
+        }
     });
-    
-    return false;
 }
+
+function skipQuestion(currentId) {
+    fetch(`/next_question/${currentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.next_id) {
+                window.location.href = `/view_question/${data.next_id}`;
+            } else {
+                alert('Atlanacak başka soru yok!');
+            }
+        });
+}
+
+document.getElementById('noteForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const content = document.getElementById('noteContent').value;
+    
+    fetch(`/add_note/{{ question.QuestionId }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Not eklenirken bir hata oluştu.');
+        }
+    });
+});
 </script>
 {% endblock %} 

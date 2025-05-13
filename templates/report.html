@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Günlük Rapor - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Günlük Görev Raporu ({{ report_date }})</h2>
+    <div class="row mb-4">
+        <div class="col-md-4 mb-2">
+            <div class="card text-white bg-success text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Tamamlanan Görevler</div>
+                    <div style="font-size:2rem;">{{ completed_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card text-white bg-danger text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Geciken Görevler</div>
+                    <div style="font-size:2rem;">{{ overdue_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card text-white bg-info text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Tamamlanma Oranı</div>
+                    <div style="font-size:2rem;">%{{ completion_rate }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">Tamamlanan Görevler</div>
+                <ul class="list-group list-group-flush">
+                    {% for task in completed_tasks %}
+                    <li class="list-group-item">{{ task.Title }}</li>
+                    {% else %}
+                    <li class="list-group-item text-muted">Bugün tamamlanan görev yok.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">Geciken Görevler</div>
+                <ul class="list-group list-group-flush">
+                    {% for task in overdue_tasks %}
+                    <li class="list-group-item">{{ task.Title }} <span class="badge bg-danger ms-2">{{ task.DueDate.strftime('%d.%m.%Y %H:%M') }}</span></li>
+                    {% else %}
+                    <li class="list-group-item text-muted">Geciken görev yok.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-4">
+        <div class="card-header bg-secondary text-white">Özet</div>
+        <div class="card-body">
+            <ul>
+                <li>Bugün tamamlanan görev sayısı: <b>{{ completed_count }}</b></li>
+                <li>Geciken görev sayısı: <b>{{ overdue_count }}</b></li>
+                <li>Toplam çalışma süresi: <b>{{ total_time }} dakika</b></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 

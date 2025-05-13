@@ -3,78 +3,107 @@
 {% block title %}Kayıt Ol - ReviseMe{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center">Yeni Hesap Oluştur</h3>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="username" class="form-label">Kullanıcı Adı</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Kayıt Ol</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('register') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Kullanıcı Adı</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">E-posta</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="password" class="form-label">Şifre</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">Ad</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Soyad</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label">Ad</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Şifre</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password_confirm" class="form-label">Şifre Tekrar</label>
+                                <input type="password" class="form-control" id="password_confirm" name="password_confirm" required>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="surname" class="form-label">Soyad</label>
-                            <input type="text" class="form-control" id="surname" name="surname" required>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="class_level" class="form-label">Sınıf Düzeyi</label>
+                                <select class="form-select" id="class_level" name="class_level" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="9">9. Sınıf</option>
+                                    <option value="10">10. Sınıf</option>
+                                    <option value="11">11. Sınıf</option>
+                                    <option value="12">12. Sınıf</option>
+                                    <option value="mezun">Mezun</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="year_of_birth" class="form-label">Doğum Yılı</label>
+                                <input type="number" class="form-control" id="year_of_birth" name="year_of_birth" min="1990" max="2010" required>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="class" class="form-label">Sınıf</label>
-                            <input type="text" class="form-control" id="class" name="class" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="area" class="form-label">Alan</label>
+                                <select class="form-select" id="area" name="area" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="sayisal">Sayısal</option>
+                                    <option value="sozel">Sözel</option>
+                                    <option value="esitagirlik">Eşit Ağırlık</option>
+                                    <option value="dil">Dil</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="aim" class="form-label">Hedef</label>
+                                <input type="text" class="form-control" id="aim" name="aim" placeholder="Örn: Tıp Fakültesi" required>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="year_of_birth" class="form-label">Doğum Yılı</label>
-                            <input type="number" class="form-control" id="year_of_birth" name="year_of_birth" required>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="security_question" class="form-label">Güvenlik Sorusu</label>
+                                <select class="form-select" id="security_question" name="security_question" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="ilk_okul">İlk okulunuzun adı nedir?</option>
+                                    <option value="anne_kizlik">Annenizin kızlık soyadı nedir?</option>
+                                    <option value="dogum_yeri">Doğum yeriniz neresidir?</option>
+                                    <option value="evcil_hayvan">İlk evcil hayvanınızın adı nedir?</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="security_answer" class="form-label">Güvenlik Cevabı</label>
+                                <input type="text" class="form-control" id="security_answer" name="security_answer" required>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">E-posta</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Telefon Numarası</label>
-                        <input type="tel" class="form-control" id="phone" name="phone" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="area" class="form-label">Hedef Alan</label>
-                        <input type="text" class="form-control" id="area" name="area" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="aim" class="form-label">Hedef</label>
-                        <textarea class="form-control" id="aim" name="aim" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="security_question" class="form-label">Güvenlik Sorusu</label>
-                        <input type="text" class="form-control" id="security_question" name="security_question" required>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <a href="{{ url_for('login') }}">Zaten hesabınız var mı? Giriş yapın</a>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">Zaten hesabınız var mı? <a href="{{ url_for('login') }}">Giriş Yap</a></p>
                 </div>
             </div>
         </div>

@@ -7,66 +7,114 @@
     <h2 class="mb-4">Bildirimler</h2>
     
     <div class="row">
-        <!-- Bugünün Soruları Bildirimi -->
-        <div class="col-md-6 mb-4">
-            <div class="card border-primary">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-rocket-takeoff text-primary"></i> Hadi Başlayalım!
-                    </h5>
-                    <p class="card-text">
-                        Bugün çözmen gereken {{ today_questions|length }} soru seni bekliyor!
-                    </p>
-                    <a href="{{ url_for('daily_questions') }}" class="btn btn-primary">
-                        <i class="bi bi-arrow-right"></i> Şimdi çözmeye başla
-                    </a>
+        <!-- Soru Bildirimleri -->
+        <div class="col-12 mb-4">
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-book-open me-1"></i> Soru Bildirimleri</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-rocket text-primary"></i> Hadi Başlayalım!</h5>
+                            <p class="card-text">Bugün çözmen gereken <b>{{ today_questions|length }}</b> soru seni bekliyor!</p>
+                            <a href="{{ url_for('today_questions') }}" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Şimdi çözmeye başla</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-exclamation-triangle text-warning"></i> Dikkat!</h5>
+                            <p class="card-text">
+                                {% if past_questions|length > 0 %}
+                                    <b>{{ past_questions|length }}</b> sorunun tekrar günü geçmiş, unutmadan tekrar et!
+                                {% else %}
+                                    Tüm sorularını zamanında tekrar ediyorsun, harika!
+                                {% endif %}
+                            </p>
+                            {% if past_questions|length > 0 %}
+                                <a href="{{ url_for('past_questions') }}" class="btn btn-warning"><i class="fas fa-arrow-right"></i> Tekrar sorularına git</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-smile text-success"></i> Harika!</h5>
+                            <p class="card-text">
+                                {% if completed_today|length > 0 %}
+                                    Bugün <b>{{ completed_today|length }}</b> soruyu başarıyla tamamladın. Böyle devam et!
+                                {% else %}
+                                    Her gün biraz daha iyi oluyorsun. Bugün de hedefini tamamla!
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('progress') }}" class="btn btn-success"><i class="fas fa-arrow-right"></i> İlerlemeni görüntüle</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Geçmiş Sorular Bildirimi -->
-        <div class="col-md-6 mb-4">
-            <div class="card border-warning">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-exclamation-triangle text-warning"></i> Dikkat!
-                    </h5>
-                    <p class="card-text">
-                        {% if past_questions|length > 0 %}
-                            {{ past_questions|length }} sorunun tekrar günü geçmiş, unutmadan tekrar et!
-                        {% else %}
-                            Tüm sorularını zamanında tekrar ediyorsun, harika!
-                        {% endif %}
-                    </p>
-                    {% if past_questions|length > 0 %}
-                        <a href="{{ url_for('past_questions') }}" class="btn btn-warning">
-                            <i class="bi bi-arrow-right"></i> Tekrar sorularına git
-                        </a>
-                    {% endif %}
+        <!-- Görev Bildirimleri -->
+        <div class="col-12 mb-4">
+            <div class="fw-bold text-warning mb-2"><i class="fas fa-tasks me-1"></i> Görev Bildirimleri</div>
+            <div class="row g-3">
+                {% if overdue_tasks|length > 0 %}
+                <div class="col-md-6">
+                    <div class="card border-danger">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-exclamation-circle text-danger"></i> Geciken Görevler</h5>
+                            <ul class="mb-2">
+                                {% for task in overdue_tasks %}
+                                <li><b>{{ task.Title }}</b> <span class="badge bg-danger ms-2">{{ task.DueDate.strftime('%d.%m.%Y %H:%M') }}</span></li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{{ url_for('tasks') }}" class="btn btn-danger"><i class="fas fa-arrow-right"></i> Görevleri Görüntüle</a>
+                        </div>
+                    </div>
                 </div>
+                {% endif %}
+                {% if completed_tasks|length > 0 %}
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-check-circle text-success"></i> Tamamlanan Görevler</h5>
+                            <ul class="mb-2">
+                                {% for task in completed_tasks %}
+                                <li><b>{{ task.Title }}</b> <span class="badge bg-success ms-2">{{ task.CompletedAt.strftime('%d.%m.%Y %H:%M') }}</span></li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{{ url_for('tasks') }}" class="btn btn-success"><i class="fas fa-arrow-right"></i> Görevleri Görüntüle</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if new_tasks|length > 0 %}
+                <div class="col-md-6">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-plus-circle text-info"></i> Yeni Görevler</h5>
+                            <ul class="mb-2">
+                                {% for task in new_tasks %}
+                                <li><b>{{ task.Title }}</b> <span class="badge bg-info ms-2">{{ task.CreatedAt.strftime('%d.%m.%Y %H:%M') }}</span></li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{{ url_for('tasks') }}" class="btn btn-info"><i class="fas fa-arrow-right"></i> Görevleri Görüntüle</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if overdue_tasks|length == 0 and completed_tasks|length == 0 and new_tasks|length == 0 %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">Görevlerle ilgili gösterilecek bir bildirim yok.</div>
+                </div>
+                {% endif %}
             </div>
         </div>
-
-        <!-- Başarı Bildirimi -->
-        <div class="col-md-6 mb-4">
-            <div class="card border-success">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-emoji-smile text-success"></i> Harika!
-                    </h5>
-                    <p class="card-text">
-                        {% if completed_today|length > 0 %}
-                            Bugün {{ completed_today|length }} soruyu başarıyla tamamladın. Böyle devam et!
-                        {% else %}
-                            Her gün biraz daha iyi oluyorsun. Bugün de hedefini tamamla!
-                        {% endif %}
-                    </p>
-                    <a href="{{ url_for('questions') }}" class="btn btn-success">
-                        <i class="bi bi-arrow-right"></i> İlerlemeni görüntüle
-                    </a>
-                </div>
-            </div>
+        {% if today_questions|length == 0 and past_questions|length == 0 and completed_today|length == 0 and overdue_tasks|length == 0 and completed_tasks|length == 0 and new_tasks|length == 0 %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">Şu anda gösterilecek bir bildirim yok.</div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

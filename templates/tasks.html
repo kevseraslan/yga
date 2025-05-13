@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Görevlerim - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">Görevlerim</h2>
+        <div>
+            <a href="{{ url_for('add_task') }}" class="btn btn-primary me-2"><i class="fas fa-plus"></i> Yeni Görev Ekle</a>
+            <a href="{{ url_for('report') }}" class="btn btn-outline-secondary"><i class="fas fa-file-alt"></i> Günlük Raporu Gör</a>
+        </div>
+    </div>
+    <!-- Üstte renkli kutular kaldırıldı -->
+
+    <!-- Aktif Görevler -->
+    <div class="mb-4">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white fw-bold">
+                <i class="fas fa-tasks"></i> Aktif Görevler
+            </div>
+            <div class="card-body bg-light">
+                {% if active_tasks %}
+                    {% for task in active_tasks %}
+                    <div class="mb-3 p-3 bg-white rounded shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div>
+                                <div class="fw-bold">{{ task.Title }}</div>
+                                <div class="text-muted small">{{ task.Description }}</div>
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary">Son Tarih: {{ task.DueDate.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    <span class="badge bg-info text-dark">{{ task.Priority }}</span>
+                                    <span class="badge bg-dark">{{ task.Category }}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-2 mt-md-0">
+                                <button class="btn btn-success btn-sm" onclick="completeTask({{ task.TaskId }})"><i class="fas fa-check"></i> Tamamla</button>
+                                <a href="{{ url_for('edit_task', task_id=task.TaskId) }}" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Düzenle</a>
+                                <button class="btn btn-danger btn-sm" onclick="deleteTask({{ task.TaskId }})"><i class="fas fa-trash"></i> Sil</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-muted">Aktif görev bulunmuyor.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Son Tamamlanan Görevler -->
+    <div class="mb-4">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white fw-bold">
+                <i class="fas fa-check-circle"></i> Son Tamamlanan Görevler
+            </div>
+            <div class="card-body" style="background:#eafaf1;">
+                {% if completed_tasks %}
+                    {% for task in completed_tasks %}
+                    <div class="mb-3 p-3 bg-white rounded shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div>
+                                <div class="fw-bold">{{ task.Title }}</div>
+                                <div class="text-muted small">{{ task.Description }}</div>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">Tamamlanma: {{ task.CompletedAt.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    <span class="badge bg-dark">{{ task.Category }}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-2 mt-md-0">
+                                <button class="btn btn-danger btn-sm" onclick="deleteTask({{ task.TaskId }})"><i class="fas fa-trash"></i> Sil</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-muted">Son tamamlanan görev bulunmuyor.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function completeTask(taskId) {
+    if (confirm('Bu görevi tamamlandı olarak işaretlemek istediğinize emin misiniz?')) {
+        fetch(`/complete-task/${taskId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Görev tamamlanırken bir hata oluştu.');
+            }
+        });
+    }
+}
+
+function deleteTask(taskId) {
+    if (confirm('Bu görevi silmek istediğinize emin misiniz?')) {
+        fetch(`/delete-task/${taskId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Görev silinirken bir hata oluştu.');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 
