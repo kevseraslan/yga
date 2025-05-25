@@ -49,4 +49,30 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveSettings() {
+    const theme = document.getElementById('theme').value;
+    localStorage.setItem('theme', theme);
+    alert('Ayarlar başarıyla kaydedildi!');
+    applyTheme();
+}
+
+function applyTheme() {
+    const theme = localStorage.getItem('theme') || 'light';
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const theme = localStorage.getItem('theme') || 'light';
+    document.getElementById('theme').value = theme;
+    applyTheme();
+});
+</script>
 {% endblock %} 

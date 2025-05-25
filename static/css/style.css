@@ -87,4 +87,52 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+html.dark-theme, body.dark-theme {
+    background-color: #181a1b !important;
+    color: #e0e0e0 !important;
+}
+html.dark-theme .card,
+body.dark-theme .card,
+html.dark-theme .navbar,
+body.dark-theme .navbar,
+html.dark-theme .modal-content,
+body.dark-theme .modal-content {
+    background-color: #23272b !important;
+    color: #e0e0e0 !important;
+}
+html.dark-theme .card-header,
+body.dark-theme .card-header,
+html.dark-theme .card-body,
+body.dark-theme .card-body {
+    background-color: #23272b !important;
+    color: #e0e0e0 !important;
+}
+html.dark-theme .form-control,
+body.dark-theme .form-control {
+    background-color: #23272b !important;
+    color: #e0e0e0 !important;
+    border-color: #444;
+}
+html.dark-theme .btn-primary,
+body.dark-theme .btn-primary,
+html.dark-theme .btn-success,
+body.dark-theme .btn-success,
+html.dark-theme .btn-secondary,
+body.dark-theme .btn-secondary {
+    color: #fff !important;
+}
+html.dark-theme .alert,
+body.dark-theme .alert {
+    background-color: #23272b !important;
+    color: #e0e0e0 !important;
+    border-color: #444 !important;
+}
+html.dark-theme .table th,
+body.dark-theme .table th,
+html.dark-theme .table td,
+body.dark-theme .table td {
+    background-color: #23272b !important;
+    color: #e0e0e0 !important;
 } 

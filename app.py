@@ -28,6 +28,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # CSRF korumasını aktif et
 csrf = CSRFProtect(app)
 
+# CSRF token'ı için secret key ayarla
+app.config['WTF_CSRF_SECRET_KEY'] = 'your-secret-key'  # Bu anahtarı güvenli bir şekilde değiştirin
+
 # E-posta ayarları
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -108,7 +111,6 @@ class Note(db.Model):
     QuestionId = db.Column(db.Integer, db.ForeignKey('Questions.QuestionId'))
     Content = db.Column(db.Text)
     
-    # İlişki
     question = db.relationship('Question', backref='notes')
 
 class Favorite(db.Model):
@@ -126,12 +128,9 @@ class Notification(db.Model):
     NotificationId = db.Column(db.Integer, primary_key=True)
     UserId = db.Column(db.Integer, db.ForeignKey('Users.UserId'))
     NotificationType = db.Column(db.String(50))
-    TaskId = db.Column(db.Integer, db.ForeignKey('Tasks.TaskId'))
     Schedule = db.Column(db.DateTime)
-    IsRead = db.Column(db.Boolean, default=False)
     
     user = db.relationship('User', backref='notifications')
-    task = db.relationship('Task', backref='notifications')
 
 class PasswordResetToken(db.Model):
     __tablename__ = 'PasswordResetTokens'
@@ -307,59 +306,69 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        password_confirm = request.form.get('password_confirm')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        class_level = request.form.get('class_level')
-        year_of_birth = request.form.get('year_of_birth')
-        area = request.form.get('area')
-        aim = request.form.get('aim')
-        security_question = request.form.get('security_question')
-        security_answer = request.form.get('security_answer')
-
-        # Kullanıcı adı kontrolü
-        if User.query.filter_by(UserName=username).first():
-            flash('Bu kullanıcı adı zaten kullanılıyor.')
-            return redirect(url_for('register'))
-
-        # E-posta kontrolü
-        if User.query.filter_by(Email=email).first():
-            flash('Bu e-posta adresi zaten kullanılıyor.')
-            return redirect(url_for('register'))
-
-        # Şifre kontrolü
-        if password != password_confirm:
-            flash('Şifreler eşleşmiyor.')
-            return redirect(url_for('register'))
-
-        # Şifreyi hashle
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-
-        # Yeni kullanıcı oluştur
-        new_user = User(
-            UserName=username,
-            PasswordHash=password_hash,
-            Name=first_name,
-            Surname=last_name,
-            Email=email,
-            Class=class_level,
-            YearOfBirth=year_of_birth,
-            Area=area,
-            Aim=aim,
-            SecurityQuestion=security_question
-        )
-
         try:
+            # Form verilerini al
+            username = request.form.get('username')
+            password = request.form.get('password')
+            password_confirm = request.form.get('password_confirm')
+            first_name = request.form.get('first_name')
+            last_name = request.form.get('last_name')
+            email = request.form.get('email')
+            class_level = request.form.get('class_level')
+            year_of_birth = request.form.get('year_of_birth')
+            area = request.form.get('area')
+            aim = request.form.get('aim')
+            security_question = request.form.get('security_question')
+            security_answer = request.form.get('security_answer')
+
+            # Zorunlu alanları kontrol et
+            if not all([username, password, first_name, last_name, email, class_level, year_of_birth, area, aim, security_question, security_answer]):
+                flash('Lütfen tüm zorunlu alanları doldurun.', 'error')
+                return redirect(url_for('register'))
+
+            # Kullanıcı adı kontrolü
+            if User.query.filter_by(UserName=username).first():
+                flash('Bu kullanıcı adı zaten kullanılıyor.', 'error')
+                return redirect(url_for('register'))
+
+            # E-posta kontrolü
+            if User.query.filter_by(Email=email).first():
+                flash('Bu e-posta adresi zaten kullanılıyor.', 'error')
+                return redirect(url_for('register'))
+
+            # Şifre kontrolü
+            if password != password_confirm:
+                flash('Şifreler eşleşmiyor.', 'error')
+                return redirect(url_for('register'))
+
+            # Şifreyi hashle
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+            # Yeni kullanıcı oluştur
+            new_user = User(
+                UserName=username,
+                PasswordHash=password_hash,
+                Name=first_name,
+                Surname=last_name,
+                Email=email,
+                Class=class_level,
+                YearOfBirth=int(year_of_birth),
+                Area=area,
+                Aim=aim,
+                SecurityQuestion=security_question
+            )
+
+            # Veritabanına kaydet
             db.session.add(new_user)
             db.session.commit()
-            flash('Kayıt başarılı! Şimdi giriş yapabilirsiniz.')
+
+            flash('Kayıt başarılı! Şimdi giriş yapabilirsiniz.', 'success')
             return redirect(url_for('login'))
+
         except Exception as e:
             db.session.rollback()
-            flash('Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.')
+            print(f"Kayıt hatası: {str(e)}")  # Hata logla
+            flash('Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error')
             return redirect(url_for('register'))
 
     return render_template('register.html')
@@ -527,8 +536,8 @@ def add_note(question_id):
             return jsonify({'success': False, 'error': 'Not içeriği gerekli.'}), 400
 
         note = Note(
-            Content=data['content'],
-            QuestionId=question_id
+            QuestionId=question_id,
+            Content=data['content']
         )
         db.session.add(note)
         db.session.commit()
@@ -536,13 +545,13 @@ def add_note(question_id):
         return jsonify({
             'success': True,
             'note': {
-                'content': note.Content,
-                'created_at': note.CreatedAt.strftime('%d.%m.%Y %H:%M') if note.CreatedAt else datetime.now().strftime('%d.%m.%Y %H:%M')
+                'id': note.NoteId,
+                'content': note.Content
             }
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/delete_question/<int:question_id>', methods=['POST'])
 @login_required
@@ -708,12 +717,12 @@ def mark_notification_read(notification_id):
         return redirect(url_for('notifications'))
     
     try:
-        notification.IsRead = True
+        db.session.delete(notification)
         db.session.commit()
-        flash('Bildirim okundu olarak işaretlendi.', 'success')
+        flash('Bildirim silindi.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('Bildirim güncellenirken bir hata oluştu.', 'error')
+        flash('Bildirim silinirken bir hata oluştu.', 'error')
     
     return redirect(url_for('notifications'))
 
@@ -808,64 +817,82 @@ def books():
 @login_required
 def add_book():
     if request.method == 'POST':
-        title = request.form.get('title')
-        author = request.form.get('author')
-        total_pages = request.form.get('total_pages')
-        current_page = request.form.get('current_page', 1)
+        try:
+            title = request.form.get('title')
+            author = request.form.get('author')
+            total_pages = request.form.get('total_pages')
 
-        new_book = Book(
-            Title=title,
-            Author=author,
-            TotalPages=total_pages,
-            CurrentPage=current_page,
-            StartDate=datetime.utcnow(),
-            UserId=current_user.UserId
-        )
+            if not all([title, author, total_pages]):
+                flash('Lütfen tüm alanları doldurun.', 'error')
+                return redirect(url_for('books'))
 
-        db.session.add(new_book)
-        db.session.commit()
-        flash('Kitap başarıyla eklendi!', 'success')
-        return redirect(url_for('books'))
+            new_book = Book(
+                Title=title,
+                Author=author,
+                TotalPages=int(total_pages),
+                CurrentPage=0,
+                StartDate=datetime.utcnow(),
+                UserId=current_user.UserId
+            )
 
-    return render_template('add_book.html')
-
-@app.route('/edit-book/<int:book_id>', methods=['POST'])
-@login_required
-def edit_book(book_id):
-    try:
-        book = Book.query.get_or_404(book_id)
-        if book.UserId != current_user.UserId:
-            flash('Bu işlem için yetkiniz yok.', 'danger')
+            db.session.add(new_book)
+            db.session.commit()
+            flash('Kitap başarıyla eklendi!', 'success')
             return redirect(url_for('books'))
-        
-        book.Title = request.form.get('title')
-        book.Author = request.form.get('author')
-        book.CurrentPage = request.form.get('current_page')
-        book.TotalPages = request.form.get('total_pages')
-        
-        db.session.commit()
-        flash('Kitap başarıyla güncellendi.', 'success')
-        return redirect(url_for('books'))
-    except Exception as e:
-        db.session.rollback()
-        flash('Kitap güncellenirken bir hata oluştu.', 'danger')
-        return redirect(url_for('books'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Kitap eklenirken bir hata oluştu.', 'error')
+            return redirect(url_for('books'))
+
+    return render_template('books.html')
 
 @app.route('/update-book-progress/<int:book_id>', methods=['POST'])
 @login_required
 def update_book_progress(book_id):
-    book = Book.query.get_or_404(book_id)
-    if book.UserId != current_user.UserId:
-        flash('Bu işlem için yetkiniz yok!', 'danger')
-        return redirect(url_for('books'))
+    try:
+        book = Book.query.get_or_404(book_id)
+        if book.UserId != current_user.UserId:
+            flash('Bu işlem için yetkiniz yok!', 'error')
+            return redirect(url_for('books'))
 
-    current_page = request.form.get('current_page')
-    if current_page and current_page.isdigit():
-        book.CurrentPage = int(current_page)
-        db.session.commit()
-        flash('Kitap ilerlemesi güncellendi!', 'success')
+        current_page = request.form.get('current_page')
+        if current_page and current_page.isdigit():
+            current_page = int(current_page)
+            if current_page > book.TotalPages:
+                flash('Mevcut sayfa toplam sayfadan büyük olamaz!', 'error')
+                return redirect(url_for('books'))
+            
+            book.CurrentPage = current_page
+            db.session.commit()
+            flash('Kitap ilerlemesi güncellendi!', 'success')
+        else:
+            flash('Geçersiz sayfa numarası!', 'error')
+
+    except Exception as e:
+        db.session.rollback()
+        flash('İlerleme güncellenirken bir hata oluştu.', 'error')
 
     return redirect(url_for('books'))
+
+@app.route('/delete-book/<int:book_id>', methods=['POST'])
+@login_required
+def delete_book(book_id):
+    try:
+        book = Book.query.get_or_404(book_id)
+        if book.UserId != current_user.UserId:
+            return jsonify({'success': False, 'error': 'Bu işlem için yetkiniz yok!'}), 403
+        
+        # Önce kitaba ait alıntıları sil
+        BookQuote.query.filter_by(BookId=book_id).delete()
+        
+        # Sonra kitabı sil
+        db.session.delete(book)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/add-quote/<int:book_id>', methods=['POST'])
 @login_required
@@ -873,71 +900,75 @@ def add_quote(book_id):
     try:
         book = Book.query.get_or_404(book_id)
         if book.UserId != current_user.UserId:
-            flash('Bu işlem için yetkiniz yok.', 'danger')
+            flash('Bu işlem için yetkiniz yok!', 'error')
             return redirect(url_for('books'))
-        
-        content = request.form.get('content')
+
         page_number = request.form.get('page_number')
-        
-        if not content:
-            flash('Alıntı içeriği boş olamaz.', 'danger')
+        content = request.form.get('content')
+
+        if not all([page_number, content]):
+            flash('Lütfen tüm alanları doldurun.', 'error')
             return redirect(url_for('books'))
-        
-        quote = BookQuote(
+
+        new_quote = BookQuote(
             BookId=book_id,
-            Content=content,
-            PageNumber=page_number,
-            CreatedAt=datetime.now()
+            PageNumber=int(page_number),
+            Content=content
         )
-        
-        db.session.add(quote)
+
+        db.session.add(new_quote)
         db.session.commit()
-        
-        flash('Alıntı başarıyla eklendi.', 'success')
-        return redirect(url_for('books'))
+        flash('Alıntı başarıyla eklendi!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('Alıntı eklenirken bir hata oluştu.', 'danger')
-        return redirect(url_for('books'))
+        flash('Alıntı eklenirken bir hata oluştu.', 'error')
 
-@app.route('/delete-quote/<int:quote_id>', methods=['POST'])
-@login_required
-def delete_quote(quote_id):
-    quote = BookQuote.query.get_or_404(quote_id)
-    book = Book.query.get_or_404(quote.BookId)
-    
-    if book.UserId != current_user.UserId:
-        return jsonify({'success': False, 'message': 'Bu işlem için yetkiniz yok.'})
-    
-    db.session.delete(quote)
-    db.session.commit()
-    
-    return jsonify({'success': True})
+    return redirect(url_for('books'))
 
 @app.route('/edit-quote/<int:quote_id>', methods=['POST'])
 @login_required
 def edit_quote(quote_id):
-    quote = BookQuote.query.get_or_404(quote_id)
-    book = Book.query.get_or_404(quote.BookId)
-    
-    if book.UserId != current_user.UserId:
-        flash('Bu işlem için yetkiniz yok.', 'danger')
-        return redirect(url_for('books'))
-    
-    content = request.form.get('content')
-    page_number = request.form.get('page_number')
-    
-    if not content:
-        flash('Alıntı içeriği boş olamaz.', 'danger')
-        return redirect(url_for('books'))
-    
-    quote.Content = content
-    quote.PageNumber = page_number
-    
-    db.session.commit()
-    
-    flash('Alıntı başarıyla güncellendi.', 'success')
+    try:
+        quote = BookQuote.query.get_or_404(quote_id)
+        book = Book.query.get(quote.BookId)
+        
+        if book.UserId != current_user.UserId:
+            flash('Bu işlem için yetkiniz yok!', 'error')
+            return redirect(url_for('books'))
+
+        page_number = request.form.get('page_number')
+        content = request.form.get('content')
+
+        if not all([page_number, content]):
+            flash('Lütfen tüm alanları doldurun.', 'error')
+            return redirect(url_for('books'))
+
+        quote.PageNumber = int(page_number)
+        quote.Content = content
+        db.session.commit()
+        flash('Alıntı başarıyla güncellendi!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Alıntı güncellenirken bir hata oluştu.', 'error')
+
     return redirect(url_for('books'))
+
+@app.route('/delete-quote/<int:quote_id>', methods=['POST'])
+@login_required
+def delete_quote(quote_id):
+    try:
+        quote = BookQuote.query.get_or_404(quote_id)
+        book = Book.query.get(quote.BookId)
+        
+        if book.UserId != current_user.UserId:
+            return jsonify({'success': False, 'error': 'Bu işlem için yetkiniz yok!'}), 403
+
+        db.session.delete(quote)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Yapay Zeka Sohbet Asistanı Route'ları
 @app.route('/chat')
@@ -1043,11 +1074,11 @@ def tasks():
         Status='pending'
     ).order_by(Task.DueDate.asc()).all()
     
-    # Tamamlanan görevleri getir (son 24 saat içinde)
-    completed_tasks = Task.query.filter_by(
-        UserId=current_user.UserId,
-        Status='completed'
-    ).filter(
+    # Tamamlanan görevleri getir (son 24 saat içinde), Serbest Çalışma hariç
+    completed_tasks = Task.query.filter(
+        Task.UserId==current_user.UserId,
+        Task.Status=='completed',
+        Task.Title != 'Serbest Çalışma',
         Task.CompletedAt >= datetime.now() - timedelta(hours=24)
     ).order_by(Task.CompletedAt.desc()).all()
     

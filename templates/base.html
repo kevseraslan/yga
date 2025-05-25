@@ -134,6 +134,20 @@
         }
     </style>
     {% block styles %}{% endblock %}
+    <script>
+    (function() {
+        try {
+            var theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+                document.body.classList.add('dark-theme');
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+                document.body.classList.remove('dark-theme');
+            }
+        } catch(e) {}
+    })();
+    </script>
 </head>
 <body>
     {% if current_user.is_authenticated %}
@@ -169,7 +183,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('ted_talks') }}">
-                            <i class="fas fa-video"></i> TEDx
+                            <i class="fas fa-video"></i> Listening
                         </a>
                     </li>
                     <li class="nav-item">
@@ -369,6 +383,10 @@
         // Sayfa yüklenince sayaç sıfırdan başlasın
         pomodoroTimeLeft = getPomodoroSettings().workDuration * 60;
         updatePomodoroDisplay();
+
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark') document.body.classList.add('dark-theme');
+        else document.body.classList.remove('dark-theme');
     });
     </script>
 </body>

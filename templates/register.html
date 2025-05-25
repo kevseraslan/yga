@@ -11,43 +11,52 @@
                     <h4 class="mb-0">Kayıt Ol</h4>
                 </div>
                 <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
                     <form method="POST" action="{{ url_for('register') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="username" class="form-label">Kullanıcı Adı</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                                <label for="username" class="form-label">Kullanıcı Adı *</label>
+                                <input type="text" class="form-control" id="username" name="username" required maxlength="50">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">E-posta</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <label for="email" class="form-label">E-posta *</label>
+                                <input type="email" class="form-control" id="email" name="email" required maxlength="100">
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">Ad</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                <label for="first_name" class="form-label">Ad *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required maxlength="50">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Soyad</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                <label for="last_name" class="form-label">Soyad *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required maxlength="50">
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">Şifre</label>
+                                <label for="password" class="form-label">Şifre *</label>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="password_confirm" class="form-label">Şifre Tekrar</label>
+                                <label for="password_confirm" class="form-label">Şifre Tekrar *</label>
                                 <input type="password" class="form-control" id="password_confirm" name="password_confirm" required>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="class_level" class="form-label">Sınıf Düzeyi</label>
+                                <label for="class_level" class="form-label">Sınıf Düzeyi *</label>
                                 <select class="form-select" id="class_level" name="class_level" required>
                                     <option value="">Seçiniz</option>
                                     <option value="9">9. Sınıf</option>
@@ -58,14 +67,14 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="year_of_birth" class="form-label">Doğum Yılı</label>
+                                <label for="year_of_birth" class="form-label">Doğum Yılı *</label>
                                 <input type="number" class="form-control" id="year_of_birth" name="year_of_birth" min="1990" max="2010" required>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="area" class="form-label">Alan</label>
+                                <label for="area" class="form-label">Alan *</label>
                                 <select class="form-select" id="area" name="area" required>
                                     <option value="">Seçiniz</option>
                                     <option value="sayisal">Sayısal</option>
@@ -75,14 +84,14 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="aim" class="form-label">Hedef</label>
-                                <input type="text" class="form-control" id="aim" name="aim" placeholder="Örn: Tıp Fakültesi" required>
+                                <label for="aim" class="form-label">Hedef *</label>
+                                <input type="text" class="form-control" id="aim" name="aim" placeholder="Örn: Tıp Fakültesi" required maxlength="100">
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="security_question" class="form-label">Güvenlik Sorusu</label>
+                                <label for="security_question" class="form-label">Güvenlik Sorusu *</label>
                                 <select class="form-select" id="security_question" name="security_question" required>
                                     <option value="">Seçiniz</option>
                                     <option value="ilk_okul">İlk okulunuzun adı nedir?</option>
@@ -92,8 +101,8 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="security_answer" class="form-label">Güvenlik Cevabı</label>
-                                <input type="text" class="form-control" id="security_answer" name="security_answer" required>
+                                <label for="security_answer" class="form-label">Güvenlik Cevabı *</label>
+                                <input type="text" class="form-control" id="security_answer" name="security_answer" required maxlength="200">
                             </div>
                         </div>
 
