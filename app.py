@@ -628,13 +628,19 @@ def category_questions(category_id):
 @app.route('/favorites')
 @login_required
 def favorites():
-    questions = Question.query.join(
+    categories = Category.query.all()
+    selected_category = request.args.get('category', type=int)
+    query = Question.query.join(
         Favorite,
         Question.QuestionId == Favorite.QuestionId
     ).filter(
-        Favorite.UserId == current_user.UserId
-    ).order_by(Question.Repeat1Date).all()
-    return render_template('favorites.html', questions=questions)
+        Favorite.UserId == current_user.UserId,
+        Question.IsHidden == False
+    )
+    if selected_category:
+        query = query.filter(Question.CategoryId == selected_category)
+    questions = query.order_by(Question.Repeat1Date).all()
+    return render_template('favorites.html', questions=questions, categories=categories, selected_category=selected_category)
 
 @app.route('/toggle_favorite/<int:question_id>', methods=['POST'])
 @login_required
@@ -684,6 +690,17 @@ def notifications():
         Question.IsCompleted == True,
         Question.Repeat1Date == today
     ).all()
+    # Bugün tekrar edilmesi gereken sorular (herhangi bir tekrar tarihi bugün olanlar)
+    today_repeat_questions = Question.query.filter(
+        Question.UserId == current_user.UserId,
+        Question.IsCompleted == False,
+        Question.RepeatCount < 3,
+        db.or_(
+            db.text("CAST([Questions].[Repeat1Date] AS DATE) = :today"),
+            db.text("CAST([Questions].[Repeat2Date] AS DATE) = :today"),
+            db.text("CAST([Questions].[Repeat3Date] AS DATE) = :today")
+        )
+    ).params(today=today).all()
     # Görev bildirimleri
     overdue_tasks = Task.query.filter(
         Task.UserId == current_user.UserId,
@@ -706,7 +723,8 @@ def notifications():
                          completed_today=completed_today,
                          overdue_tasks=overdue_tasks,
                          completed_tasks=completed_tasks,
-                         new_tasks=new_tasks)
+                         new_tasks=new_tasks,
+                         today_repeat_questions=today_repeat_questions)
 
 @app.route('/mark_notification_read/<int:notification_id>', methods=['POST'])
 @login_required
@@ -1390,27 +1408,25 @@ def update_repeat_count(question_id):
     question = Question.query.get_or_404(question_id)
     if question.UserId != current_user.UserId:
         return jsonify({'success': False, 'error': 'Bu soruya erişim izniniz yok.'})
-    
     try:
         question.RepeatCount += 1
-        
         # 3 tekrar tamamlandıysa soruyu tamamlandı olarak işaretle
         if question.RepeatCount >= 3:
             question.IsCompleted = True
             question.CompletedAt = datetime.now()
-            
-            # Tekrar tarihlerini güncelle
-            now = datetime.now()
-            question.Repeat1Date = now
-            question.Repeat2Date = now + timedelta(days=3)
-            question.Repeat3Date = now + timedelta(days=7)
-        
         db.session.commit()
+        # Doğru tekrar tarihini belirle
+        if question.RepeatCount == 1:
+            next_date = question.Repeat2Date.strftime('%d.%m.%Y') if question.Repeat2Date else None
+        elif question.RepeatCount == 2:
+            next_date = question.Repeat3Date.strftime('%d.%m.%Y') if question.Repeat3Date else None
+        else:
+            next_date = None
         return jsonify({
-            'success': True, 
+            'success': True,
             'repeat_count': question.RepeatCount,
             'is_completed': question.IsCompleted,
-            'next_repeat_date': question.Repeat1Date.strftime('%d.%m.%Y') if question.Repeat1Date else None
+            'next_repeat_date': next_date
         })
     except Exception as e:
         db.session.rollback()
@@ -1579,13 +1595,16 @@ def today_questions():
     today = datetime.now().date()
     questions = Question.query.filter(
         Question.UserId == current_user.UserId,
-        db.text("CAST([Questions].[Repeat1Date] AS DATE) = :today"),
         Question.IsCompleted == False,
-        Question.RepeatCount < 3
+        Question.RepeatCount < 3,
+        db.or_(
+            db.text("CAST([Questions].[Repeat1Date] AS DATE) = :today"),
+            db.text("CAST([Questions].[Repeat2Date] AS DATE) = :today"),
+            db.text("CAST([Questions].[Repeat3Date] AS DATE) = :today")
+        )
     ).params(today=today).order_by(Question.Repeat1Date).all()
-    
-    categories = Category.query.all()
-    return render_template('questions.html', questions=questions, categories=categories)
+    now = datetime.now()
+    return render_template('today_questions.html', questions=questions, now=now)
 
 @app.route('/past_questions')
 @login_required
@@ -1593,10 +1612,15 @@ def past_questions():
     today = datetime.now().date()
     questions = Question.query.filter(
         Question.UserId == current_user.UserId,
-        db.text("CAST([Questions].[Repeat1Date] AS DATE) < :today"),
         Question.IsCompleted == False,
-        Question.RepeatCount < 3
-    ).params(today=today).order_by(Question.Repeat1Date.desc()).all()
+        Question.RepeatCount < 3,
+        Question.IsHidden == False,
+        db.or_(
+            db.text("CAST([Questions].[Repeat1Date] AS DATE) < CAST(GETDATE() AS DATE)"),
+            db.text("CAST([Questions].[Repeat2Date] AS DATE) < CAST(GETDATE() AS DATE)"),
+            db.text("CAST([Questions].[Repeat3Date] AS DATE) < CAST(GETDATE() AS DATE)")
+        )
+    ).order_by(Question.Repeat1Date.desc()).all()
     
     categories = Category.query.all()
     return render_template('questions.html', questions=questions, categories=categories)
@@ -1873,9 +1897,9 @@ def hide_question(question_id):
     question = Question.query.get_or_404(question_id)
     if question.UserId != current_user.UserId:
         return jsonify({'success': False, 'error': 'Bu işlem için yetkiniz yok'}), 403
-    
     try:
-        question.IsHidden = True
+        question.Repeat2Date = None
+        question.Repeat3Date = None
         db.session.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -1889,65 +1913,91 @@ def progress_report():
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
 
+    # Kategoriler yoksa otomatik ekle
+    if Category.query.count() == 0:
+        create_categories()
+
     # Haftalık ve aylık tamamlanan soru/görev
     weekly_questions = Question.query.filter(
         Question.UserId == current_user.UserId,
         Question.IsCompleted == True,
+        Question.CompletedAt != None,
+        Question.CategoryId != None,
         db.text("CAST([Questions].[CompletedAt] AS DATE) >= :week_ago")
     ).params(week_ago=week_ago).all()
+    print('Haftalık tamamlanan sorular:', [q.QuestionId for q in weekly_questions])
+
     monthly_questions = Question.query.filter(
         Question.UserId == current_user.UserId,
         Question.IsCompleted == True,
+        Question.CompletedAt != None,
+        Question.CategoryId != None,
         db.text("CAST([Questions].[CompletedAt] AS DATE) >= :month_ago")
     ).params(month_ago=month_ago).all()
 
     weekly_tasks = Task.query.filter(
         Task.UserId == current_user.UserId,
         Task.Status == 'completed',
+        Task.CompletedAt != None,
         db.text("CAST([Tasks].[CompletedAt] AS DATE) >= :week_ago")
     ).params(week_ago=week_ago).all()
     monthly_tasks = Task.query.filter(
         Task.UserId == current_user.UserId,
         Task.Status == 'completed',
+        Task.CompletedAt != None,
         db.text("CAST([Tasks].[CompletedAt] AS DATE) >= :month_ago")
     ).params(month_ago=month_ago).all()
 
-    # Kategori bazlı dağılım (haftalık)
+    # Kategori bazlı dağılım (haftalık, pozitif/negatif)
     categories = Category.query.all()
     category_stats = []
     for category in categories:
-        count = Question.query.filter(
+        questions = Question.query.filter(
             Question.UserId == current_user.UserId,
             Question.IsCompleted == True,
+            Question.CompletedAt != None,
             Question.CategoryId == category.CategoryId,
             db.text("CAST([Questions].[CompletedAt] AS DATE) >= :week_ago")
-        ).params(week_ago=week_ago).count()
+        ).params(week_ago=week_ago).all()
+        on_time = 0
+        late = 0
+        for q in questions:
+            completed_date = q.CompletedAt.date() if q.CompletedAt else None
+            repeat_dates = [
+                q.Repeat1Date.date() if q.Repeat1Date else None,
+                q.Repeat2Date.date() if q.Repeat2Date else None,
+                q.Repeat3Date.date() if q.Repeat3Date else None
+            ]
+            if completed_date in repeat_dates:
+                on_time += 1
+            else:
+                if any(rd and completed_date and completed_date > rd for rd in repeat_dates):
+                    late += 1
         category_stats.append({
             'category': category.Name,
-            'count': count
+            'on_time': on_time,
+            'late': late
         })
 
-    # Başarı oranı (haftalık)
     total_weekly_questions = Question.query.filter(
         Question.UserId == current_user.UserId,
+        Question.CategoryId != None,
         db.text("CAST([Questions].[Repeat1Date] AS DATE) >= :week_ago")
     ).params(week_ago=week_ago).count()
     completed_weekly_questions = len(weekly_questions)
     success_rate = int((completed_weekly_questions / total_weekly_questions) * 100) if total_weekly_questions > 0 else 0
 
-    # Öneri ve hedef (en az yapılan kategori)
-    min_category = min(category_stats, key=lambda x: x['count']) if category_stats else None
+    min_category = min(category_stats, key=lambda x: x['on_time']+x['late']) if category_stats else None
     suggestion = None
-    if min_category and min_category['count'] < 5:
+    if min_category and (min_category['on_time']+min_category['late']) < 5:
         suggestion = f"Bu hafta {min_category['category']} kategorisinde daha fazla soru çözmeye çalış!"
     elif min_category:
         suggestion = f"Harika! Tüm kategorilerde iyi gidiyorsun."
 
-    # Haftalık hedef (örnek: 10 soru)
     weekly_goal = 10
     goal_message = f"Bu hafta en az {weekly_goal} soru çöz!"
 
-    return jsonify({
+    result = {
         'weekly_questions': completed_weekly_questions,
         'monthly_questions': len(monthly_questions),
         'weekly_tasks': len(weekly_tasks),
@@ -1956,7 +2006,9 @@ def progress_report():
         'category_stats': category_stats,
         'suggestion': suggestion,
         'goal_message': goal_message
-    })
+    }
+    print('progress_report sonucu:', result)
+    return jsonify(result)
 
 @app.route('/progress')
 @login_required
@@ -1975,6 +2027,24 @@ def next_question(current_id):
             return jsonify({'next_id': ids[idx+1]})
     # Sonraki yoksa veya tek soru ise
     return jsonify({'next_id': None})
+
+@app.route('/skip_question/<int:question_id>', methods=['POST'])
+@login_required
+def skip_question(question_id):
+    questions = Question.query.filter_by(UserId=current_user.UserId, IsHidden=False).order_by(Question.QuestionId).all()
+    ids = [q.QuestionId for q in questions]
+    print("Aktif Soru ID'leri:", ids)
+    print("Mevcut Soru ID:", question_id)
+    if question_id in ids:
+        idx = ids.index(question_id)
+        print("Mevcut index:", idx)
+        if idx + 1 < len(ids):
+            next_id = ids[idx+1]
+        else:
+            next_id = ids[0] if ids else None
+        print("Sonraki soru ID:", next_id)
+        return jsonify({'success': True, 'next_question_id': next_id})
+    return jsonify({'success': True, 'next_question_id': None})
 
 # Ana sayfa yönlendirmesi
 @app.before_request

@@ -306,29 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const skipBtn = document.getElementById('skipQuestion');
     if (skipBtn) {
         skipBtn.addEventListener('click', function() {
-            fetch(`/skip_question/${questionId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (data.next_question_id) {
-                        window.location.href = `/question_detail/${data.next_question_id}`;
-                    } else {
-                        window.location.href = '/questions';
-                    }
-                } else {
-                    alert('Bir hata oluştu: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Hata:', error);
-                alert('Bir hata oluştu.');
-            });
+            skipQuestion(questionId);
         });
     }
 
@@ -405,5 +383,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function skipQuestion(questionId) {
+    fetch(`/skip_question/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.next_question_id) {
+                window.location.href = `/view_question/${data.next_question_id}`;
+            } else {
+                window.location.href = '/questions';
+            }
+        } else {
+            alert('Bir hata oluştu.');
+        }
+    });
+}
 </script>
 {% endblock %} 

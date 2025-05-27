@@ -80,23 +80,33 @@ document.addEventListener('DOMContentLoaded', function() {
             // Kategori grafiği
             const ctx = document.getElementById('categoryChart').getContext('2d');
             const labels = data.category_stats.map(item => item.category);
-            const values = data.category_stats.map(item => item.count);
+            const onTimeValues = data.category_stats.map(item => item.on_time);
+            const lateValues = data.category_stats.map(item => item.late);
             new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Çözülen Soru (Haftalık)',
-                        data: values,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
+                    datasets: [
+                        {
+                            label: 'Zamanında Tekrar',
+                            data: onTimeValues,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Gecikmeli Tekrar',
+                            data: lateValues,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false },
+                        legend: { display: true },
                         title: { display: false }
                     },
                     scales: {

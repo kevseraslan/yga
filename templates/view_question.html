@@ -45,25 +45,18 @@
                                     <button onclick="deleteQuestion({{ question.QuestionId }})" class="btn btn-outline-danger">
                                         <i class="fas fa-trash"></i> Sil
                                     </button>
-                                    <button onclick="markCompleted({{ question.QuestionId }})" class="btn btn-success">
+                                    {% if question.RepeatCount < 3 and not question.IsCompleted %}
+                                    <button id="repeatBtn" onclick="repeatQuestion({{ question.QuestionId }})" class="btn btn-info">
+                                        <i class="fas fa-redo"></i> Tekrar Yapıldı
+                                    </button>
+                                    {% elif question.RepeatCount >= 3 or question.IsCompleted %}
+                                    <button class="btn btn-success" disabled>
                                         <i class="fas fa-check"></i> Tamamlandı
                                     </button>
+                                    {% endif %}
                                     <button onclick="skipQuestion({{ question.QuestionId }})" class="btn btn-warning">
                                         <i class="fas fa-forward"></i> Soruyu Atla
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <small class="text-muted">Tekrar 1: {{ question.Repeat1Date.strftime('%d.%m.%Y') }}</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <small class="text-muted">Tekrar 2: {{ question.Repeat2Date.strftime('%d.%m.%Y') }}</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <small class="text-muted">Tekrar 3: {{ question.Repeat3Date.strftime('%d.%m.%Y') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -144,8 +137,8 @@ function deleteQuestion(questionId) {
     }
 }
 
-function markCompleted(questionId) {
-    fetch(`/complete_question/${questionId}`, {
+function repeatQuestion(questionId) {
+    fetch(`/update_repeat_count/${questionId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -155,24 +148,33 @@ function markCompleted(questionId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Soru tamamlandı olarak işaretlendi!');
-            window.location.href = "{{ url_for('questions') }}";
+            window.location.reload();
         } else {
-            alert('Soru tamamlanırken bir hata oluştu.');
+            alert('Tekrar sayısı güncellenirken bir hata oluştu.');
         }
     });
 }
 
-function skipQuestion(currentId) {
-    fetch(`/next_question/${currentId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.next_id) {
-                window.location.href = `/view_question/${data.next_id}`;
+function skipQuestion(questionId) {
+    fetch(`/skip_question/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.next_question_id) {
+                window.location.href = `/view_question/${data.next_question_id}`;
             } else {
-                alert('Atlanacak başka soru yok!');
+                window.location.href = '/questions';
             }
-        });
+        } else {
+            alert('Bir hata oluştu.');
+        }
+    });
 }
 
 document.getElementById('noteForm').addEventListener('submit', function(e) {

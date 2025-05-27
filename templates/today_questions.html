@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Bugünün Soruları - ReviseMe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Bugünün Tekrar Edilecek Soruları</h2>
+    {% if questions|length == 0 %}
+        <div class="alert alert-success">Bugün tekrar edilecek soru yok!</div>
+    {% else %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for question in questions %}
+        <div class="col">
+            <div class="card h-100">
+                {% if question.ImagePath %}
+                <img src="{{ url_for('static', filename=question.ImagePath) }}" class="card-img-top" alt="Soru Görseli" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ question.Content }}</h5>
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">Tekrar Sayısı: <span id="repeat-count-{{ question.QuestionId }}">{{ question.RepeatCount }}</span></span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-info text-dark" id="repeat-date-{{ question.QuestionId }}">
+                            Tekrar Tarihi: 
+                            {% if question.RepeatCount == 0 and question.Repeat1Date %}
+                                {{ question.Repeat1Date.strftime('%d.%m.%Y') }}
+                            {% elif question.RepeatCount == 1 and question.Repeat2Date %}
+                                {{ question.Repeat2Date.strftime('%d.%m.%Y') }}
+                            {% elif question.RepeatCount == 2 and question.Repeat3Date %}
+                                {{ question.Repeat3Date.strftime('%d.%m.%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    {% if question.RepeatCount < 3 and not question.IsCompleted %}
+                    <button type="button" class="btn btn-info w-100" data-qid="{{ question.QuestionId }}" onclick="repeatQuestion(this)">
+                        <i class="fas fa-redo"></i> Tekrar Yapıldı
+                    </button>
+                    {% else %}
+                    <button class="btn btn-success w-100" disabled>
+                        <i class="fas fa-check"></i> Tamamlandı
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function repeatQuestion(btn) {
+    var questionId = btn.getAttribute('data-qid');
+    fetch(`/update_repeat_count/${questionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Tekrar sayısını güncelle
+            document.getElementById(`repeat-count-${questionId}`).innerText = data.repeat_count;
+            // Tekrar tarihini güncelle
+            document.getElementById(`repeat-date-${questionId}`).innerText = 'Tekrar Tarihi: ' + (data.next_repeat_date || '-');
+            // Butonu güncelle
+            if (data.repeat_count >= 3 || data.is_completed) {
+                btn.classList.remove('btn-info');
+                btn.classList.add('btn-success');
+                btn.innerHTML = '<i class="fas fa-check"></i> Tamamlandı';
+                btn.disabled = true;
+            }
+        } else {
+            alert('Tekrar sayısı güncellenirken bir hata oluştu.');
+        }
+    });
+}
+</script>
+{% endblock %} 

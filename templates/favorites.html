@@ -4,17 +4,27 @@
 
 {% block content %}
 <div class="container mt-4">
-    <!-- Sekmeli Menü (Modern, Renkli, İkonlu, Aktif sekme vurgulu) -->
-    <div class="mb-4">
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ url_for('questions') }}" class="btn fw-bold text-white" style="background:#3574e6; min-width:160px;"><i class="fas fa-list"></i> Sorularım</a>
-            <a href="{{ url_for('add_question') }}" class="btn fw-bold text-white" style="background:#16a085; min-width:160px;"><i class="fas fa-plus"></i> Yeni Soru Ekle</a>
-            <a href="{{ url_for('favorites') }}" class="btn fw-bold text-black" style="background:#ffc107; min-width:160px; box-shadow:0 2px 8px #ffd70055;"><i class="fas fa-star"></i> Favorilerim</a>
-            <a href="{{ url_for('today_questions') }}" class="btn fw-bold text-white" style="background:#7b8a99; min-width:160px;"><i class="fas fa-calendar-alt"></i> Bugünün Soruları</a>
-            <a href="{{ url_for('past_questions') }}" class="btn fw-bold text-white" style="background:#23272b; min-width:160px;"><i class="fas fa-undo"></i> Geçmiş Sorular</a>
+    <!-- Sekmeli Menü (Sorularım ile aynı hizalı ve stilli) -->
+    <div class="mb-3">
+        <div class="btn-group w-100" role="group">
+            <a href="{{ url_for('questions') }}" class="btn btn-primary{% if request.endpoint == 'questions' %} active{% endif %}">Sorularım</a>
+            <a href="{{ url_for('favorites') }}" class="btn btn-warning">★ Favorilerim</a>
+            <a href="{{ url_for('today_questions') }}" class="btn btn-secondary">Bugünün Soruları</a>
+            <a href="{{ url_for('past_questions') }}" class="btn btn-dark">Geçmiş Sorular</a>
         </div>
     </div>
     <h2 class="mb-4">Favorilerim</h2>
+    <!-- Kategori/Ders Filtre Dropdown'u -->
+    <form method="get" class="mb-4" style="max-width:300px;">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+            <option value="">Tüm Dersler</option>
+            {% for cat in categories %}
+                {% if cat.Name != 'İngilizce' %}
+                <option value="{{ cat.CategoryId }}" {% if selected_category == cat.CategoryId %}selected{% endif %}>{{ cat.Name }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </form>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for question in questions %}
         <div class="col">

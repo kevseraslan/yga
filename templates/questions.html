@@ -14,60 +14,49 @@
     <div class="mb-3">
         <div class="btn-group w-100" role="group">
             <a href="{{ url_for('questions') }}" class="btn btn-primary{% if request.endpoint == 'questions' %} active{% endif %}">Sorularım</a>
-            <a href="{{ url_for('add_question') }}" class="btn btn-success">+ Yeni Soru Ekle</a>
             <a href="{{ url_for('favorites') }}" class="btn btn-warning">★ Favorilerim</a>
             <a href="{{ url_for('today_questions') }}" class="btn btn-secondary">Bugünün Soruları</a>
             <a href="{{ url_for('past_questions') }}" class="btn btn-dark">Geçmiş Sorular</a>
         </div>
     </div>
 
-    <!-- Kategori Filtreleme ve Grid -->
-    <form method="get" class="mb-4">
-        <div class="row g-2 align-items-center">
-            <div class="col-auto">
-                <label for="category" class="form-label mb-0">Ders/Kategori:</label>
-            </div>
-            <div class="col-auto">
-                <select name="category" id="category" class="form-select" onchange="this.form.submit()">
-                    <option value="">Tümü</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat.CategoryId }}" {% if selected_category == cat.CategoryId %}selected{% endif %}>{{ cat.Name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-auto">
-                <a href="{{ url_for('add_question') }}" class="btn btn-success">+ Yeni Soru Ekle</a>
-            </div>
-        </div>
-    </form>
+    <!-- Üstte Yeni Soru Ekle Butonu -->
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ url_for('add_question') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Yeni Soru Ekle
+        </a>
+    </div>
 
-    {% if questions %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for question in questions %}
-        <div class="col">
-            <div class="card h-100">
-                {% if question.ImagePath %}
-                <img src="{{ url_for('static', filename=question.ImagePath) }}" class="card-img-top" alt="Soru Görseli" style="height: 140px; object-fit: cover;">
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ question.Content[:100] }}{% if question.Content|length > 100 %}...{% endif %}</h5>
-                    <p class="card-text text-muted mb-1">
-                        Tekrar Sayısı: {{ question.RepeatCount }}<br>
-                        Oluşturulma: {{ question.Repeat1Date.strftime('%d.%m.%Y %H:%M') if question.Repeat1Date else '-' }}<br>
-                        <span class="badge bg-primary">{{ question.category.Name if question.category else '' }}</span>
-                    </p>
-                </div>
-                <div class="card-footer bg-white border-0">
-                    <a href="{{ url_for('view_question', question_id=question.QuestionId) }}" class="btn btn-primary w-100"><i class="fas fa-eye"></i> Görüntüle</a>
-                    <button class="btn btn-outline-danger w-100 mt-2" onclick="hideQuestion({{ question.QuestionId }})"><i class="fas fa-eye-slash"></i> Bir daha gösterme</button>
+    <!-- Kategori Kartları -->
+    <div class="row">
+        {% set icons = {
+            'Matematik': '📐',
+            'Türk Dili ve Edebiyatı': '📖',
+            'Felsefe': '🧠',
+            'Din': '🕌',
+            'Coğrafya': '🌍',
+            'Fizik': '⚛️',
+            'Kimya': '🧪',
+            'Biyoloji': '🧬',
+            'Tarih': '🏺',
+            'Yabancı Dil': '🌐'
+        } %}
+        {% for cat in categories %}
+        {% if cat.Name != 'İngilizce' %}
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 category-card text-center" style="cursor:pointer;" onclick="window.location.href='{{ url_for('category_questions', category_id=cat.CategoryId) }}'">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height:120px;">
+                    <div style="font-size:2.5rem;">{{ icons.get(cat.Name, '📚') }}</div>
+                    <div class="mt-2 fw-bold" style="font-size:1.2em;">{{ cat.Name }}</div>
+                    <div class="mt-2 text-muted" style="font-size:1em;">
+                        {{ questions|selectattr('CategoryId', 'equalto', cat.CategoryId)|list|length }} soru
+                    </div>
                 </div>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
-    {% else %}
-        <div class="alert alert-info">Henüz hiç soru eklemediniz.</div>
-    {% endif %}
 </div>
 {% endblock %}
 

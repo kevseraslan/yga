@@ -25,13 +25,17 @@
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-exclamation-triangle text-warning"></i> Dikkat!</h5>
                             <p class="card-text">
-                                {% if past_questions|length > 0 %}
+                                {% if today_repeat_questions|length > 0 %}
+                                    <b>{{ today_repeat_questions|length }}</b> sorunun tekrar günü bugün! Unutmadan tekrar et!
+                                {% elif past_questions|length > 0 %}
                                     <b>{{ past_questions|length }}</b> sorunun tekrar günü geçmiş, unutmadan tekrar et!
                                 {% else %}
                                     Tüm sorularını zamanında tekrar ediyorsun, harika!
                                 {% endif %}
                             </p>
-                            {% if past_questions|length > 0 %}
+                            {% if today_repeat_questions|length > 0 %}
+                                <a href="{{ url_for('today_questions') }}" class="btn btn-warning"><i class="fas fa-arrow-right"></i> Bugünün sorularına git</a>
+                            {% elif past_questions|length > 0 %}
                                 <a href="{{ url_for('past_questions') }}" class="btn btn-warning"><i class="fas fa-arrow-right"></i> Tekrar sorularına git</a>
                             {% endif %}
                         </div>
